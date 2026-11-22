@@ -505,7 +505,7 @@ export function InvoiceForm({
       </Card>
 
       {/* Sticky Bottom Action Bar (Ramah Ponsel & Proteksi Klik Ganda) */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 p-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 p-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
         <div className="max-w-2xl mx-auto flex items-center gap-2.5">
           <Button
             type="button"

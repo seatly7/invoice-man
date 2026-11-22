@@ -118,7 +118,6 @@ export async function getInvoiceMetrics(): Promise<InvoiceMetrics> {
     }
   }
 
-  const now = new Date()
   const currentYear = now.getFullYear()
   const currentMonth = now.getMonth()
   const todayStr = now.toISOString().split('T')[0]
