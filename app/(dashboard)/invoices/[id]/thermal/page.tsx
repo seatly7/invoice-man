@@ -31,7 +31,34 @@ export default async function ThermalInvoicePage({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pb-20 print:bg-white print:p-0 print:pb-0">
+    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pb-20 print:min-h-0 print:bg-white print:p-0 print:pb-0 print:m-0">
+      {/* Pengaturan CSS Cetak Khusus Struk Roll Thermal 80mm */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @page {
+              size: 80mm auto;
+              margin: 2mm 3mm;
+            }
+            @media print {
+              html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                height: auto !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              header, nav, aside, footer, .print-hidden, [data-print-hidden] {
+                display: none !important;
+              }
+            }
+          `,
+        }}
+      />
+
       {/* Top Floating Control Bar (Disembunyikan saat mencetak) */}
       <div className="sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 shadow-xs print:hidden">
         <div className="max-w-md mx-auto flex items-center justify-between gap-3">
@@ -53,7 +80,7 @@ export default async function ThermalInvoicePage({
       </div>
 
       {/* Lembar Simulasi Kertas Thermal Struk 80mm */}
-      <div className="max-w-[340px] mx-auto mt-4 sm:mt-8 bg-white text-black font-mono text-xs shadow-md border border-zinc-200 p-5 rounded-lg print:shadow-none print:border-none print:m-0 print:p-2 print:max-w-full">
+      <div className="max-w-[340px] mx-auto mt-4 sm:mt-8 bg-white text-black font-mono text-xs shadow-md border border-zinc-200 p-5 rounded-lg print:shadow-none print:border-none print:m-0 print:p-1 print:w-[72mm] print:max-w-[72mm] print:rounded-none">
         {/* Header Toko */}
         <div className="text-center space-y-1 pb-3">
           <h2 className="text-base font-extrabold uppercase tracking-tight">

@@ -188,7 +188,7 @@ export function InvoiceForm({
   }
 
   return (
-    <div className="space-y-6 pb-28">
+    <div className="space-y-6">
       {/* Alert Error */}
       {errorMessage && (
         <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-sm">
@@ -197,7 +197,11 @@ export function InvoiceForm({
         </div>
       )}
 
-      {/* Bagian 1: Informasi Pelanggan */}
+      {/* Responsive Grid: Kolom Kiri untuk Data & Barang, Kolom Kanan untuk Rincian & Aksi */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Kolom Kiri (lg:col-span-7 xl:col-span-8) */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-5">
+          {/* Bagian 1: Informasi Pelanggan */}
       <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs">
         <CardContent className="p-4 sm:p-5 space-y-3.5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-1 border-b border-zinc-100 dark:border-zinc-800">
@@ -407,119 +411,163 @@ export function InvoiceForm({
         </CardContent>
       </Card>
 
-      {/* Bagian 4: Kalkulasi, Diskon, Pajak & Catatan */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs">
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-1 border-b border-zinc-100 dark:border-zinc-800">
-            Rincian Pembayaran
-          </div>
+        </div>
 
-          {/* Subtotal */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-500">Subtotal</span>
-            <span className="font-mono font-semibold">{formatRupiah(totals.subtotal)}</span>
-          </div>
-
-          {/* Diskon */}
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-zinc-500 shrink-0">Potongan Diskon (Rp)</span>
-            <div className="w-36">
-              <Input
-                type="number"
-                min={0}
-                placeholder="0"
-                value={discountAmount === 0 ? '' : discountAmount}
-                onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
-                className="h-9 font-mono text-right text-sm"
-              />
-            </div>
-          </div>
-
-          {/* PPN / Pajak */}
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-zinc-500">Pajak (PPN)</span>
-              <div className="flex gap-1.5">
-                {[0, 11, 12].map((rate) => (
-                  <button
-                    key={rate}
-                    type="button"
-                    onClick={() => setTaxRate(rate)}
-                    className={`text-xs px-2.5 py-1 font-medium rounded border transition-colors ${
-                      taxRate === rate
-                        ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900'
-                        : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
-                    }`}
-                  >
-                    {rate}%
-                  </button>
-                ))}
+        {/* Kolom Kanan: Rincian Pembayaran, Diskon, Pajak & Tombol Aksi Desktop */}
+        <div className="lg:col-span-5 xl:col-span-4 space-y-5 lg:sticky lg:top-24">
+          <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs">
+            <CardContent className="p-4 sm:p-5 space-y-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-1 border-b border-zinc-100 dark:border-zinc-800">
+                Rincian Pembayaran
               </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <div className="w-16">
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={taxRate}
-                  onChange={(e) => setTaxRate(Number(e.target.value) || 0)}
-                  className="h-9 font-mono text-center text-sm"
+              {/* Subtotal */}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-zinc-500">Subtotal</span>
+                <span className="font-mono font-semibold">{formatRupiah(totals.subtotal)}</span>
+              </div>
+
+              {/* Diskon */}
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-zinc-500 shrink-0">Potongan Diskon (Rp)</span>
+                <div className="w-36">
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    value={discountAmount === 0 ? '' : discountAmount}
+                    onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
+                    className="h-9 font-mono text-right text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* PPN / Pajak */}
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-zinc-500">Pajak (PPN)</span>
+                  <div className="flex gap-1.5">
+                    {[0, 11, 12].map((rate) => (
+                      <button
+                        key={rate}
+                        type="button"
+                        onClick={() => setTaxRate(rate)}
+                        className={`text-xs px-2.5 py-1 font-medium rounded border transition-colors ${
+                          taxRate === rate
+                            ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900'
+                            : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
+                        }`}
+                      >
+                        {rate}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="w-16">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={taxRate}
+                      onChange={(e) => setTaxRate(Number(e.target.value) || 0)}
+                      className="h-9 font-mono text-center text-sm"
+                    />
+                  </div>
+                  <span className="font-mono text-xs text-zinc-500 w-24 text-right">
+                    +{formatRupiah(totals.tax_amount)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Grand Total */}
+              <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-baseline justify-between">
+                <div>
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    Grand Total
+                  </span>
+                  <p className="text-xs text-zinc-500">Total bersih yang harus dibayar</p>
+                </div>
+                <span className="font-mono font-extrabold text-2xl text-zinc-950 dark:text-white">
+                  {formatRupiah(totals.grand_total)}
+                </span>
+              </div>
+
+              {/* Catatan / Info Pembayaran */}
+              <div className="space-y-1.5 pt-2">
+                <Label htmlFor="notes" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Catatan Kaki Dokumen (Opsional)
+                </Label>
+                <Textarea
+                  id="notes"
+                  rows={2}
+                  placeholder="Info transfer bank, syarat jatuh tempo, atau ucapan terima kasih..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="resize-none text-sm placeholder:text-zinc-400"
                 />
               </div>
-              <span className="font-mono text-xs text-zinc-500 w-24 text-right">
-                +{formatRupiah(totals.tax_amount)}
-              </span>
-            </div>
-          </div>
 
-          {/* Grand Total */}
-          <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-baseline justify-between">
-            <div>
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                Grand Total
-              </span>
-              <p className="text-xs text-zinc-500">Total bersih yang harus dibayar</p>
-            </div>
-            <span className="font-mono font-extrabold text-2xl text-zinc-950 dark:text-white">
-              {formatRupiah(totals.grand_total)}
-            </span>
-          </div>
+              {/* Tombol Aksi di Desktop */}
+              <div className="hidden lg:flex flex-col gap-2.5 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                <Button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => handleSubmit('issued')}
+                  className="w-full h-12 text-base font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-sm active:scale-95 transition-transform"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Menerbitkan...
+                    </>
+                  ) : (
+                    <>
+                      <FileCheck2 className="w-5 h-5 mr-1.5" />
+                      Terbitkan Invoice
+                    </>
+                  )}
+                </Button>
 
-          {/* Catatan / Info Pembayaran */}
-          <div className="space-y-1.5 pt-2">
-            <Label htmlFor="notes" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              Catatan Kaki Dokumen (Opsional)
-            </Label>
-            <Textarea
-              id="notes"
-              rows={2}
-              placeholder="Info transfer bank, syarat jatuh tempo, atau ucapan terima kasih..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="resize-none text-sm placeholder:text-zinc-400"
-            />
-          </div>
-        </CardContent>
-      </Card>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => handleSubmit('draft')}
+                  className="w-full h-11 text-sm font-medium border-zinc-300 dark:border-zinc-700 active:scale-95 transition-transform"
+                >
+                  {isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-1.5" />
+                      Simpan sebagai Draft
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-      {/* Sticky Bottom Action Bar (Ramah Ponsel & Proteksi Klik Ganda) */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 p-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
-        <div className="max-w-2xl mx-auto flex items-center gap-2.5">
+      {/* Sticky Bottom Action Bar KHUSUS Layar Ponsel & Tablet (lg:hidden) */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 px-4 py-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+        <div className="max-w-md mx-auto flex items-center gap-2.5">
           <Button
             type="button"
             variant="outline"
             disabled={isPending}
             onClick={() => handleSubmit('draft')}
-            className="flex-1 h-12 text-sm font-medium border-zinc-300 dark:border-zinc-700 active:scale-95 transition-transform"
+            className="flex-1 h-12 text-xs sm:text-sm font-medium border-zinc-300 dark:border-zinc-700 active:scale-95 transition-transform rounded-xl cursor-pointer"
           >
             {isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
                 <Save className="w-4 h-4 mr-1.5" />
-                Simpan Draft
+                Draft
               </>
             )}
           </Button>
@@ -528,16 +576,16 @@ export function InvoiceForm({
             type="button"
             disabled={isPending}
             onClick={() => handleSubmit('issued')}
-            className="flex-[2] h-12 text-base font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-sm active:scale-95 transition-transform"
+            className="flex-[2] h-12 text-sm sm:text-base font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-sm active:scale-95 transition-transform rounded-xl cursor-pointer"
           >
             {isPending ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
                 Menerbitkan...
               </>
             ) : (
               <>
-                <FileCheck2 className="w-5 h-5 mr-1.5" />
+                <FileCheck2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
                 Terbitkan Invoice
               </>
             )}

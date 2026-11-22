@@ -52,7 +52,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       )}
 
       {/* Bagian 1: Identitas Bisnis & Usaha */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs">
+      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl">
         <CardContent className="p-4 sm:p-5 space-y-3.5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-1 border-b border-zinc-100 dark:border-zinc-800">
             <Store className="w-3.5 h-3.5" />
@@ -61,7 +61,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
 
           {/* Nama Usaha */}
           <div className="space-y-1.5">
-            <Label htmlFor="businessName" className="text-xs sm:text-sm font-medium">
+            <Label htmlFor="businessName" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Nama Usaha / Toko / Perusahaan <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -70,13 +70,13 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               defaultValue={initialSettings?.businessName || ''}
               placeholder="Contoh: CV. Maju Berkah Solusindo"
               required
-              className="h-11 text-base placeholder:text-zinc-400"
+              className="h-11 text-base placeholder:text-zinc-400 rounded-xl"
             />
           </div>
 
           {/* Alamat Usaha */}
           <div className="space-y-1.5">
-            <Label htmlFor="businessAddress" className="text-xs sm:text-sm font-medium">
+            <Label htmlFor="businessAddress" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Alamat Usaha
             </Label>
             <div className="relative">
@@ -86,7 +86,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                 name="businessAddress"
                 defaultValue={initialSettings?.businessAddress || ''}
                 placeholder="Jl. Raya No. 123, Kota, Provinsi"
-                className="pl-9 h-11 text-sm placeholder:text-zinc-400"
+                className="pl-9 h-11 text-sm placeholder:text-zinc-400 rounded-xl"
               />
             </div>
           </div>
@@ -94,7 +94,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           {/* Kontak: Telepon & Email */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="businessPhone" className="text-xs sm:text-sm font-medium">
+              <Label htmlFor="businessPhone" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 No. Telepon / WhatsApp
               </Label>
               <div className="relative">
@@ -105,13 +105,13 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   type="tel"
                   defaultValue={initialSettings?.businessPhone || ''}
                   placeholder="0812-xxxx-xxxx"
-                  className="pl-9 h-11 text-sm placeholder:text-zinc-400"
+                  className="pl-9 h-11 text-sm placeholder:text-zinc-400 rounded-xl"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="businessEmail" className="text-xs sm:text-sm font-medium">
+              <Label htmlFor="businessEmail" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 Email Usaha
               </Label>
               <div className="relative">
@@ -122,7 +122,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   type="email"
                   defaultValue={initialSettings?.businessEmail || ''}
                   placeholder="kontak@toko.com"
-                  className="pl-9 h-11 text-sm placeholder:text-zinc-400"
+                  className="pl-9 h-11 text-sm placeholder:text-zinc-400 rounded-xl"
                 />
               </div>
             </div>
@@ -138,14 +138,14 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               name="taxId"
               defaultValue={initialSettings?.taxId || ''}
               placeholder="01.234.567.8-901.000"
-              className="h-11 text-sm font-mono placeholder:text-zinc-400"
+              className="h-11 text-sm font-mono placeholder:text-zinc-400 rounded-xl"
             />
           </div>
         </CardContent>
       </Card>
 
       {/* Bagian 2: Pengaturan Dokumen Faktur */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs">
+      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl">
         <CardContent className="p-4 sm:p-5 space-y-3.5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-1 border-b border-zinc-100 dark:border-zinc-800">
             <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -155,7 +155,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Awalan Invoice (Prefix) */}
             <div className="space-y-1.5">
-              <Label htmlFor="invoicePrefix" className="text-xs sm:text-sm font-medium">
+              <Label htmlFor="invoicePrefix" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 Awalan Nomor Invoice <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -164,7 +164,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                 defaultValue={initialSettings?.invoicePrefix || 'INV'}
                 placeholder="INV"
                 required
-                className="h-11 font-mono uppercase text-sm"
+                className="h-11 font-mono uppercase text-sm rounded-xl"
               />
               <p className="text-xs text-zinc-500">
                 Contoh hasil: {initialSettings?.invoicePrefix || 'INV'}-0001
@@ -174,7 +174,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
             {/* Tarif Pajak Default */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="defaultTaxRate" className="text-xs sm:text-sm font-medium">
+                <Label htmlFor="defaultTaxRate" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                   Tarif Pajak Standar (%)
                 </Label>
                 <div className="flex gap-1.5">
@@ -183,9 +183,9 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                       key={r}
                       type="button"
                       onClick={() => setTaxRate(r)}
-                      className={`text-xs px-2.5 py-1 font-medium rounded border transition-colors ${
+                      className={`text-xs px-2.5 py-1 font-medium rounded-lg border transition-colors cursor-pointer ${
                         taxRate === r
-                          ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900'
+                          ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 font-semibold shadow-xs'
                           : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
                       }`}
                     >
@@ -204,7 +204,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   max={100}
                   value={taxRate}
                   onChange={(e) => setTaxRate(Number(e.target.value) || 0)}
-                  className="pl-9 h-11 font-mono text-sm"
+                  className="pl-9 h-11 font-mono text-sm rounded-xl"
                 />
               </div>
               <p className="text-xs text-zinc-500">
@@ -216,7 +216,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       </Card>
 
       {/* Bagian 3: Info Rekening & Catatan Pembayaran */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs">
+      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl">
         <CardContent className="p-4 sm:p-5 space-y-3.5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-1 border-b border-zinc-100 dark:border-zinc-800">
             <CreditCard className="w-3.5 h-3.5" />
@@ -224,7 +224,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="footerNote" className="text-xs sm:text-sm font-medium">
+            <Label htmlFor="footerNote" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Instruksi Rekening Transfer Bank / Catatan Kaki
             </Label>
             <Textarea
@@ -236,7 +236,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                 'Pembayaran via transfer Bank BCA: 8290-xxx-xxx a.n Nama Rekening. Mohon kirimkan bukti pembayaran.'
               }
               placeholder="Nomor rekening bank, nama pemilik rekening, atau instruksi pembayaran..."
-              className="text-sm resize-none"
+              className="text-sm resize-none rounded-xl"
             />
             <p className="text-xs text-zinc-500">
               Teks ini akan selalu tercetak di bagian bawah lembar Faktur PDF A4 dan struk kasir.
@@ -250,7 +250,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full h-12 text-base font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow transition-transform active:scale-[0.98]"
+          className="w-full h-12 text-base font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 rounded-xl shadow transition-transform active:scale-[0.98] cursor-pointer"
         >
           {isPending ? (
             <>

@@ -36,71 +36,21 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   }, [state, product, onSuccess])
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="space-y-4">
       {/* Hidden ID jika mode Edit */}
       {product?.id && <input type="hidden" name="id" value={product.id} />}
 
       {/* Alert Error */}
       {state?.error && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-sm">
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-sm">
           <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>{state.error}</span>
         </div>
       )}
 
-      {/* Baris 1: Kode SKU & Satuan */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="sku" className="text-xs sm:text-sm font-medium">
-            Kode SKU <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="sku"
-            name="sku"
-            placeholder="BRG-001"
-            defaultValue={product?.sku || ''}
-            required
-            className="h-11 font-mono uppercase text-sm"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="unit" className="text-xs sm:text-sm font-medium">
-            Satuan <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="unit"
-            name="unit"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            placeholder="pcs"
-            required
-            className="h-11 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Saran Satuan Cepat */}
-      <div className="flex flex-wrap gap-1.5 -mt-2">
-        {COMMON_UNITS.map((u) => (
-          <button
-            key={u}
-            type="button"
-            onClick={() => setUnit(u)}
-            className={`text-xs px-2.5 py-1 rounded-md border min-h-[30px] font-medium transition-colors ${
-              unit.toLowerCase() === u
-                ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900'
-                : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
-            }`}
-          >
-            {u}
-          </button>
-        ))}
-      </div>
-
-      {/* Baris 2: Nama Barang */}
+      {/* Field 1: Nama Barang / Jasa (Primary) */}
       <div className="space-y-1.5">
-        <Label htmlFor="name" className="text-xs sm:text-sm font-medium">
+        <Label htmlFor="name" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Nama Barang / Jasa <span className="text-red-500">*</span>
         </Label>
         <Input
@@ -109,22 +59,22 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           placeholder="Contoh: Kertas Thermal 80mm / Jasa Desain"
           defaultValue={product?.name || ''}
           required
-          className="h-11 text-base placeholder:text-zinc-400"
+          className="h-11 text-base placeholder:text-zinc-400 rounded-xl"
         />
       </div>
 
-      {/* Baris 3: Harga Satuan */}
+      {/* Field 2: Harga Satuan */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="price" className="text-xs sm:text-sm font-medium">
+          <Label htmlFor="price" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Harga Satuan (Rp) <span className="text-red-500">*</span>
           </Label>
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 font-mono">
             {formatRupiah(price || 0)}
           </span>
         </div>
         <div className="relative">
-          <span className="absolute left-3 top-3 text-sm text-zinc-400 font-medium">
+          <span className="absolute left-3.5 top-3 text-sm text-zinc-400 font-medium">
             Rp
           </span>
           <Input
@@ -137,12 +87,65 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             onChange={(e) => setPrice(Number(e.target.value) || 0)}
             placeholder="0"
             required
-            className="h-11 pl-10 text-base font-mono"
+            className="h-11 pl-11 text-base font-mono rounded-xl"
           />
         </div>
       </div>
 
-      {/* Baris 4: Deskripsi (Opsional) */}
+      {/* Field 3: Kode SKU & Satuan */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="sku" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Kode SKU <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="sku"
+            name="sku"
+            placeholder="BRG-001"
+            defaultValue={product?.sku || ''}
+            required
+            className="h-11 font-mono uppercase text-sm rounded-xl"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="unit" className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Satuan <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="unit"
+            name="unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder="pcs"
+            required
+            className="h-11 text-sm rounded-xl"
+          />
+        </div>
+      </div>
+
+      {/* Field 4: Pilihan Satuan Cepat */}
+      <div className="space-y-1.5">
+        <span className="text-[11px] font-medium text-zinc-400">Pilih Satuan Cepat:</span>
+        <div className="flex flex-wrap gap-1.5">
+          {COMMON_UNITS.map((u) => (
+            <button
+              key={u}
+              type="button"
+              onClick={() => setUnit(u)}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors cursor-pointer ${
+                unit.toLowerCase() === u
+                  ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 font-semibold shadow-xs'
+                  : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+              }`}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Field 5: Keterangan Tambahan */}
       <div className="space-y-1.5">
         <Label htmlFor="description" className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-400">
           Keterangan Tambahan (Opsional)
@@ -153,16 +156,16 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           rows={2}
           placeholder="Rincian spesifikasi atau catatan produk..."
           defaultValue={product?.description || ''}
-          className="resize-none text-sm placeholder:text-zinc-400"
+          className="resize-none text-sm placeholder:text-zinc-400 rounded-xl"
         />
       </div>
 
-      {/* Tombol Simpan */}
+      {/* Field 6: Tombol Simpan */}
       <div className="pt-2">
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full h-11 text-base font-medium bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow transition-transform active:scale-[0.98]"
+          className="w-full h-12 text-base font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 rounded-xl shadow-sm transition-transform active:scale-[0.99] cursor-pointer"
         >
           {isPending ? (
             <>

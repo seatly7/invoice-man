@@ -137,3 +137,37 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 }
+
+/* Optimasi Khusus Mode Cetak (Print / Save as PDF) */
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hilangkan header aplikasi, sidebar navigasi, bottom bar, dan tombol kontrol */
+  header,
+  nav,
+  aside,
+  footer,
+  .print\:hidden,
+  [data-print-hidden] {
+    display: none !important;
+  }
+
+  /* Hindari pemotongan baris/tanda tangan di tengah halaman */
+  .break-inside-avoid,
+  tr,
+  td,
+  th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}

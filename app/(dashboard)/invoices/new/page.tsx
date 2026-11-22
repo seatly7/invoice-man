@@ -22,12 +22,12 @@ export default async function NewInvoicePage() {
   const defaultTaxRate = settings?.defaultTaxRate ?? 11
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-6xl mx-auto space-y-5 pb-28 lg:pb-12">
       {/* Top Header dengan Tombol Kembali */}
       <div className="flex items-center gap-3">
         <Link
           href="/invoices"
-          className="w-10 h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+          className="w-10 h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 shadow-2xs"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>

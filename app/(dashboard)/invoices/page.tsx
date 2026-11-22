@@ -18,7 +18,17 @@ export default async function InvoicesPage() {
   ])
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Header Halaman */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          Daftar Invoice
+        </h1>
+        <p className="text-xs sm:text-sm text-zinc-500 mt-0.5">
+          Kelola seluruh riwayat tagihan faktur dan pantau status pembayaran secara real-time.
+        </p>
+      </div>
+
       {/* Kartu Ringkasan Metrik (Total Belum Bayar & Mini KPI) */}
       <InvoiceSummaryCards metrics={metrics} />
 

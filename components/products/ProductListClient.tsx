@@ -93,25 +93,34 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
   return (
     <div className="space-y-4">
       {/* Top Action Bar: Search & Filter Chips & Tombol Tambah */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
-          <Input
-            placeholder="Cari nama barang atau SKU..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-11 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-          />
+      <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-stretch sm:items-center justify-between">
+        {/* Row 1 di Mobile: Search + Tombol Tambah Cepat */}
+        <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+            <Input
+              placeholder="Cari nama barang atau SKU..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-11 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+            />
+          </div>
+          <Button
+            onClick={handleCreateNew}
+            className="sm:hidden h-11 px-3.5 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 font-semibold shadow-xs shrink-0 rounded-xl"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            <span>Tambah</span>
+          </Button>
         </div>
 
-        {/* Filter Tabs & Tombol Tambah */}
-        <div className="flex items-center gap-2 justify-between sm:justify-end">
-          <div className="flex items-center p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs">
+        {/* Filter Tabs & Tombol Tambah di Desktop */}
+        <div className="flex items-center gap-2.5 justify-between sm:justify-end">
+          <div className="grid grid-cols-3 sm:flex items-center p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setFilterActive('active')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-colors text-center ${
                 filterActive === 'active'
                   ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400'
@@ -122,7 +131,7 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
             <button
               type="button"
               onClick={() => setFilterActive('all')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-colors text-center ${
                 filterActive === 'all'
                   ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400'
@@ -133,7 +142,7 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
             <button
               type="button"
               onClick={() => setFilterActive('inactive')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-colors text-center ${
                 filterActive === 'inactive'
                   ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400'
@@ -145,10 +154,10 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
 
           <Button
             onClick={handleCreateNew}
-            className="h-11 px-4 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 font-medium shadow-xs shrink-0"
+            className="hidden sm:inline-flex h-11 px-4 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 font-semibold shadow-xs shrink-0 rounded-xl"
           >
             <Plus className="w-4 h-4 mr-1.5" />
-            <span>Tambah</span>
+            <span>Tambah Barang</span>
           </Button>
         </div>
       </div>
@@ -180,8 +189,8 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
       ) : (
         <>
           {/* Tampilan Desktop: Table */}
-          <div className="hidden md:block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs">
-            <Table>
+          <div className="hidden md:block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-x-auto shadow-xs">
+            <Table className="min-w-[650px]">
               <TableHeader className="bg-zinc-50 dark:bg-zinc-800/50">
                 <TableRow>
                   <TableHead className="w-28 font-mono text-xs uppercase">SKU</TableHead>
@@ -281,13 +290,13 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
             {filteredProducts.map((p) => (
               <Card
                 key={p.id}
-                className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs overflow-hidden"
+                className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl overflow-hidden"
               >
-                <CardContent className="p-3.5">
+                <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wide bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wide bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
                           {p.sku}
                         </span>
                         <Badge
@@ -301,7 +310,7 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
                           {p.isActive ? 'Aktif' : 'Nonaktif'}
                         </Badge>
                       </div>
-                      <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 leading-snug truncate">
+                      <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 leading-snug truncate">
                         {p.name}
                       </h4>
                       {p.description && (
@@ -313,7 +322,7 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
 
                     {/* Menu Aksi */}
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="h-9 w-9 -mr-1.5 -mt-1 rounded-md inline-flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors">
+                      <DropdownMenuTrigger className="h-9 w-9 -mr-1.5 -mt-1 rounded-lg inline-flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
@@ -352,10 +361,10 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
                   </div>
 
                   <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-zinc-500 font-medium">
                       Per {p.unit}
                     </span>
-                    <span className="font-mono font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+                    <span className="font-mono font-bold text-base text-zinc-900 dark:text-zinc-100">
                       {formatRupiah(p.price)}
                     </span>
                   </div>

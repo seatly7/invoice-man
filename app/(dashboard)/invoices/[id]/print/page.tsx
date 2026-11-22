@@ -6,7 +6,7 @@ import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { formatRupiah } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { PrintButton } from '@/components/invoice/PrintButton'
-import { ArrowLeft, Printer, FileText } from 'lucide-react'
+import { ArrowLeft, FileText } from 'lucide-react'
 
 export const instant = false
 
@@ -31,7 +31,34 @@ export default async function PrintInvoicePage({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pb-16 print:bg-white print:p-0 print:pb-0">
+    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pb-16 print:min-h-0 print:bg-white print:p-0 print:pb-0 print:m-0">
+      {/* Pengaturan CSS Cetak Khusus Lembar A4 agar Pas 1 Halaman */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @page {
+              size: A4 portrait;
+              margin: 8mm 10mm;
+            }
+            @media print {
+              html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                height: auto !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              header, nav, aside, footer, .print-hidden, [data-print-hidden] {
+                display: none !important;
+              }
+            }
+          `,
+        }}
+      />
+
       {/* Top Floating Control Bar (Disembunyikan saat mencetak) */}
       <div className="sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 shadow-xs print:hidden">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
@@ -53,15 +80,15 @@ export default async function PrintInvoicePage({
       </div>
 
       {/* Lembar Dokumen Kertas A4 (Print Sheet) */}
-      <div className="max-w-4xl mx-auto mt-4 sm:mt-6 bg-white text-zinc-900 shadow-sm border border-zinc-200/80 p-6 sm:p-10 rounded-xl print:shadow-none print:border-none print:m-0 print:p-0 print:max-w-full">
+      <div className="max-w-4xl mx-auto mt-4 sm:mt-6 bg-white text-zinc-900 shadow-sm border border-zinc-200/80 p-6 sm:p-8 rounded-xl print:shadow-none print:border-none print:m-0 print:p-0 print:w-full print:max-w-none print:rounded-none break-inside-avoid print:break-inside-avoid">
         {/* Header Usaha & Judul Faktur */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 pb-6 border-b-2 border-zinc-900">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-4 border-b-2 border-zinc-900">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-sm">
-                <FileText className="w-4 h-4" />
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
+                <FileText className="w-3.5 h-3.5" />
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-zinc-900">
+              <h2 className="text-lg font-bold tracking-tight text-zinc-900">
                 {settings?.businessName || 'INVOICE-MAN'}
               </h2>
             </div>
@@ -81,10 +108,10 @@ export default async function PrintInvoicePage({
             <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-zinc-900">
               FAKTUR TAGIHAN
             </h1>
-            <p className="font-mono text-base font-bold text-zinc-800 mt-1">
+            <p className="font-mono text-base font-bold text-zinc-800 mt-0.5">
               #{invoice.invoiceNumber}
             </p>
-            <div className="text-xs text-zinc-600 mt-2 space-y-0.5">
+            <div className="text-xs text-zinc-600 mt-1.5 space-y-0.5">
               <p>Tanggal Terbit: <span className="font-medium font-mono">{formatDate(invoice.issueDate)}</span></p>
               {invoice.dueDate && (
                 <p>Jatuh Tempo: <span className="font-medium font-mono">{formatDate(invoice.dueDate)}</span></p>
@@ -94,12 +121,12 @@ export default async function PrintInvoicePage({
         </div>
 
         {/* Informasi Tagihan: Kepada Siapa */}
-        <div className="py-5 border-b border-zinc-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="py-3.5 border-b border-zinc-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               Tagihan Ditujukan Kepada:
             </span>
-            <h3 className="font-bold text-base text-zinc-900 mt-1">
+            <h3 className="font-bold text-base text-zinc-900 mt-0.5">
               {invoice.customerName}
             </h3>
             {invoice.customerAddress && (
@@ -108,7 +135,7 @@ export default async function PrintInvoicePage({
               </p>
             )}
             {invoice.customerPhone && (
-              <p className="text-xs text-zinc-500 font-mono mt-1">
+              <p className="text-xs text-zinc-500 font-mono mt-0.5">
                 Telp: {invoice.customerPhone}
               </p>
             )}
@@ -116,36 +143,36 @@ export default async function PrintInvoicePage({
         </div>
 
         {/* Tabel Rincian Barang */}
-        <div className="py-6">
+        <div className="py-4">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b-2 border-zinc-900 text-zinc-900 uppercase font-bold tracking-wider">
-                <th className="py-2.5 w-10 text-center">No</th>
-                <th className="py-2.5">Deskripsi Barang / Jasa</th>
-                <th className="py-2.5 w-20 text-center">Satuan</th>
-                <th className="py-2.5 w-16 text-center">Qty</th>
-                <th className="py-2.5 w-28 text-right font-mono">Harga (Rp)</th>
-                <th className="py-2.5 w-32 text-right font-mono">Total (Rp)</th>
+                <th className="py-2 w-10 text-center">No</th>
+                <th className="py-2">Deskripsi Barang / Jasa</th>
+                <th className="py-2 w-20 text-center">Satuan</th>
+                <th className="py-2 w-16 text-center">Qty</th>
+                <th className="py-2 w-28 text-right font-mono">Harga (Rp)</th>
+                <th className="py-2 w-32 text-right font-mono">Total (Rp)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">
               {invoice.items.map((it, idx) => (
                 <tr key={it.id} className="text-zinc-800">
-                  <td className="py-3 text-center text-zinc-400 font-mono">{idx + 1}</td>
-                  <td className="py-3 font-medium pr-2">{it.itemName}</td>
-                  <td className="py-3 text-center text-zinc-600">{it.unit}</td>
-                  <td className="py-3 text-center font-mono font-bold">{it.qty}</td>
-                  <td className="py-3 text-right font-mono">{formatRupiah(it.unitPrice, false)}</td>
-                  <td className="py-3 text-right font-mono font-semibold">{formatRupiah(it.lineTotal, false)}</td>
+                  <td className="py-2 text-center text-zinc-400 font-mono">{idx + 1}</td>
+                  <td className="py-2 font-medium pr-2">{it.itemName}</td>
+                  <td className="py-2 text-center text-zinc-600">{it.unit}</td>
+                  <td className="py-2 text-center font-mono font-bold">{it.qty}</td>
+                  <td className="py-2 text-right font-mono">{formatRupiah(it.unitPrice, false)}</td>
+                  <td className="py-2 text-right font-mono font-semibold">{formatRupiah(it.lineTotal, false)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Kalkulasi Total */}
-        <div className="pt-4 border-t-2 border-zinc-900 flex flex-col sm:flex-row justify-between gap-6">
-          <div className="flex-1 space-y-2">
+        {/* Kalkulasi Total & Catatan */}
+        <div className="pt-3 border-t-2 border-zinc-900 flex flex-col sm:flex-row justify-between gap-6">
+          <div className="flex-1 space-y-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               Catatan & Instruksi Pembayaran:
             </span>
@@ -174,7 +201,7 @@ export default async function PrintInvoicePage({
               </div>
             )}
 
-            <div className="pt-2 border-t border-zinc-900 flex justify-between font-bold text-sm text-zinc-900">
+            <div className="pt-1.5 border-t border-zinc-900 flex justify-between font-bold text-sm text-zinc-900">
               <span>Grand Total</span>
               <span className="font-mono text-base">{formatRupiah(invoice.grandTotal)}</span>
             </div>
@@ -182,17 +209,17 @@ export default async function PrintInvoicePage({
         </div>
 
         {/* Kolom Tanda Tangan */}
-        <div className="pt-12 flex justify-between text-center text-xs text-zinc-600">
+        <div className="pt-8 flex justify-between text-center text-xs text-zinc-800 break-inside-avoid print:break-inside-avoid">
           <div className="w-44">
             <p>Penerima,</p>
-            <div className="h-16"></div>
+            <div className="h-12"></div>
             <p className="border-t border-zinc-400 pt-1 font-medium">{invoice.customerName}</p>
           </div>
 
           <div className="w-44">
             <p>Hormat Kami,</p>
-            <div className="h-16"></div>
-            <p className="border-t border-zinc-400 pt-1 font-medium font-bold text-zinc-900">
+            <div className="h-12"></div>
+            <p className="border-t border-zinc-400 pt-1 font-bold text-zinc-900">
               {settings?.businessName || 'Pihak Pengirim'}
             </p>
           </div>

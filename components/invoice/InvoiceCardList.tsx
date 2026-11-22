@@ -92,25 +92,34 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
   return (
     <div className="space-y-4">
       {/* Search Bar & Filter Chips & Tombol Buat */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        {/* Input Pencarian */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
-          <Input
-            placeholder="Cari no. invoice atau pelanggan..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-11 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-          />
+      <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-stretch sm:items-center justify-between">
+        {/* Row 1 di Mobile: Search + Tombol Buat */}
+        <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+            <Input
+              placeholder="Cari no. invoice atau pelanggan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-11 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+            />
+          </div>
+          <Link
+            href="/invoices/new"
+            className="sm:hidden inline-flex items-center justify-center h-11 px-3.5 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 shrink-0 shadow-xs"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            <span>Buat</span>
+          </Link>
         </div>
 
-        {/* Tab Filter Status */}
-        <div className="flex items-center gap-2 justify-between sm:justify-end overflow-x-auto pb-1 sm:pb-0">
-          <div className="flex items-center p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs shrink-0">
+        {/* Tab Filter Status & Tombol Buat di Desktop */}
+        <div className="flex items-center gap-2.5 justify-between sm:justify-end">
+          <div className="grid grid-cols-4 sm:flex items-center p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`px-1.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-center truncate ${
                 statusFilter === 'all'
                   ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400'
@@ -121,18 +130,18 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
             <button
               type="button"
               onClick={() => setStatusFilter('issued')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`px-1.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-center truncate ${
                 statusFilter === 'issued'
                   ? 'bg-white dark:bg-zinc-900 text-amber-600 dark:text-amber-400 font-semibold shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400'
               }`}
             >
-              Belum Bayar
+              Belum
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter('paid')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`px-1.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-center truncate ${
                 statusFilter === 'paid'
                   ? 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 font-semibold shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400'
@@ -143,7 +152,7 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
             <button
               type="button"
               onClick={() => setStatusFilter('draft')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`px-1.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-center truncate ${
                 statusFilter === 'draft'
                   ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400'
@@ -155,7 +164,7 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
 
           <Link
             href="/invoices/new"
-            className="inline-flex items-center justify-center h-11 px-4 rounded-lg text-sm font-medium bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shrink-0 transition-colors shadow-xs"
+            className="hidden sm:inline-flex items-center justify-center h-11 px-4 rounded-xl text-sm font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shrink-0 transition-colors shadow-xs"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             <span>Buat Invoice</span>
@@ -193,8 +202,8 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
       ) : (
         <>
           {/* Tampilan Desktop: Table */}
-          <div className="hidden md:block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs">
-            <Table>
+          <div className="hidden md:block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-x-auto shadow-xs">
+            <Table className="min-w-[700px]">
               <TableHeader className="bg-zinc-50 dark:bg-zinc-800/50">
                 <TableRow>
                   <TableHead className="w-32 font-mono text-xs uppercase">No. Invoice</TableHead>
@@ -294,9 +303,9 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
             {filteredInvoices.map((inv) => (
               <Card
                 key={inv.id}
-                className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs overflow-hidden active:bg-zinc-50/50 transition-colors"
+                className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl overflow-hidden active:bg-zinc-50/50 transition-colors"
               >
-                <CardContent className="p-3.5">
+                <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       {/* Header baris atas: No Invoice & Status Badge */}
