@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { redirect } from 'next/navigation'
+import { connection } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { Header } from '@/components/dashboard/Header'
@@ -13,6 +14,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  await connection()
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 

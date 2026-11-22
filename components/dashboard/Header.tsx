@@ -1,9 +1,8 @@
 'use client'
 
-import * as React from 'react'
+import { useTransition } from 'react'
 import Link from 'next/link'
 import { signOutAction } from '@/lib/actions/auth.actions'
-import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { FileText, LogOut, Plus, Store, User } from 'lucide-react'
+import { FileText, LogOut, User, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export interface HeaderProps {
   businessName?: string
@@ -20,6 +20,19 @@ export interface HeaderProps {
 }
 
 export function Header({ businessName, userEmail }: HeaderProps) {
+  const [isLoggingOut, startLoggingOut] = useTransition()
+
+  function handleSignOut() {
+    const toastId = toast.loading('Sedang keluar dari akun...')
+    startLoggingOut(async () => {
+      try {
+        await signOutAction()
+      } catch {
+        toast.error('Gagal keluar', { id: toastId })
+      }
+    })
+  }
+
   return (
     <header className="sticky top-0 z-20 w-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 pt-safe shadow-[0_1px_3px_rgba(0,0,0,0.02)] print:hidden">
       <div className="flex items-center justify-between h-14 md:h-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -52,13 +65,13 @@ export function Header({ businessName, userEmail }: HeaderProps) {
         {/* User Profile & Aksi Cepat */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Tombol Buat Cepat (Desktop & Tablet) */}
-          <Link
+          {/* <Link
             href="/invoices/new"
             className="hidden sm:inline-flex items-center justify-center h-9 px-3.5 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 transition-colors shadow-xs"
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />
             <span>Buat Invoice</span>
-          </Link>
+          </Link> */}
 
           {/* User Menu Dropdown */}
           <DropdownMenu>
@@ -85,10 +98,20 @@ export function Header({ businessName, userEmail }: HeaderProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600 dark:text-red-400 cursor-pointer focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
-                onClick={() => signOutAction()}
+                disabled={isLoggingOut}
+                onClick={handleSignOut}
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                <span>Keluar Akun</span>
+                {isLoggingOut ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <span>Sedang Keluar...</span>
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    <span>Keluar Akun</span>
+                  </>
+                )}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

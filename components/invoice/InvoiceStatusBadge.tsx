@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { InvoiceStatus } from '@/types/invoice.types'
 

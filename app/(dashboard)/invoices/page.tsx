@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { connection } from 'next/server'
 import { getInvoices, getInvoiceMetrics } from '@/lib/queries/invoice.queries'
 import { InvoiceSummaryCards } from '@/components/invoice/InvoiceSummaryCards'
 import { InvoiceCardList } from '@/components/invoice/InvoiceCardList'
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
 export const instant = false
 
 export default async function InvoicesPage() {
+  await connection()
+
   // Ambil daftar invoice dan statistik metrik secara paralel
   const [invoicesRes, metrics] = await Promise.all([
     getInvoices(),

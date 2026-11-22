@@ -1,3 +1,4 @@
+import { connection } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import {
   InvoiceListItem,
@@ -14,8 +15,9 @@ export async function getInvoices({
   search,
   status = 'all',
   page = 1,
-  pageSize = 50,
+  pageSize = 200,
 }: InvoiceQueryParams = {}): Promise<InvoiceListResponse> {
+  await connection()
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -83,6 +85,7 @@ export async function getInvoices({
  * Mengambil ringkasan metrik statistik invoice untuk widget kartu atas
  */
 export async function getInvoiceMetrics(): Promise<InvoiceMetrics> {
+  await connection()
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -120,7 +123,8 @@ export async function getInvoiceMetrics(): Promise<InvoiceMetrics> {
 
   const currentYear = now.getFullYear()
   const currentMonth = now.getMonth()
-  const todayStr = now.toISOString().split('T')[0]
+  // Gunakan tanggal lokal Indonesia (WIB) agar perhitungan jatuh tempo tepat sesuai hari kalender lokal
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(now)
 
   let totalUnpaidAmount = 0
   let unpaidCount = 0
@@ -164,6 +168,7 @@ export async function getInvoiceMetrics(): Promise<InvoiceMetrics> {
  * Mengambil detail satu invoice beserta seluruh rincian itemnya
  */
 export async function getInvoiceById(id: string): Promise<InvoiceWithItems | null> {
+  await connection()
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 

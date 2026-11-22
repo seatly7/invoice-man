@@ -17,6 +17,7 @@ export async function upsertProductAction(
   formData: FormData
 ): Promise<ProductActionResult> {
   const id = formData.get('id') as string | null
+  const rawIsActive = formData.get('isActive')
   const rawData = {
     id: id || undefined,
     sku: formData.get('sku') as string,
@@ -24,7 +25,7 @@ export async function upsertProductAction(
     unit: formData.get('unit') as string,
     price: Number(formData.get('price')),
     description: (formData.get('description') as string) || null,
-    isActive: formData.get('isActive') !== 'false',
+    isActive: rawIsActive !== null ? rawIsActive === 'true' : true,
   }
 
   const validated = productSchema.safeParse(rawData)

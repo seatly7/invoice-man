@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { connection } from 'next/server'
 import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { SettingsForm } from '@/components/settings/SettingsForm'
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 export const instant = false
 
 export default async function SettingsPage() {
+  await connection()
   const initialSettings = await getInvoiceSettings()
 
   return (

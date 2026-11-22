@@ -1,6 +1,5 @@
 'use client'
 
-import * as React from 'react'
 import { ResponsiveModal } from '@/components/ui/responsive-modal'
 import { ProductForm } from './ProductForm'
 import { Product } from '@/types/product.types'

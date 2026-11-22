@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { connection } from 'next/server'
 import { getInvoiceById } from '@/lib/queries/invoice.queries'
 import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { formatRupiah } from '@/lib/utils/currency'
@@ -19,6 +20,7 @@ export default async function ThermalInvoicePage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  await connection()
   const { id } = await params
 
   const [invoice, settings] = await Promise.all([

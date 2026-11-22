@@ -1,6 +1,6 @@
+import { connection } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { Product, ProductQueryParams, ProductListResponse } from '@/types/product.types'
-import { MOCK_PRODUCTS } from '@/lib/mock/mock-data'
 
 /**
  * Mengambil daftar produk milik user yang sedang aktif.
@@ -9,9 +9,10 @@ import { MOCK_PRODUCTS } from '@/lib/mock/mock-data'
 export async function getProducts({
   search,
   page = 1,
-  pageSize = 50,
+  pageSize = 200,
   isActiveOnly = false,
 }: ProductQueryParams = {}): Promise<ProductListResponse> {
+  await connection()
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -89,6 +90,7 @@ export async function getProducts({
  * Mengambil detail satu produk berdasarkan ID milik user yang aktif
  */
 export async function getProductById(id: string): Promise<Product | null> {
+  await connection()
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 

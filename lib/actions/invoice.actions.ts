@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
+import { z } from 'zod'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createInvoiceSchema } from '@/lib/schemas/invoice.schema'
 import { calcInvoiceTotals } from '@/lib/utils/invoice-calc'
@@ -19,7 +19,7 @@ export interface CreateInvoiceResult {
  * 1. Coba panggil RPC PostgreSQL generate_invoice_number(user_id) (atomik)
  * 2. Jika RPC belum terpasang di database user, gunakan fallback atomik via SQL update
  */
-async function getNextInvoiceNumber(supabase: any, userId: string): Promise<string> {
+async function getNextInvoiceNumber(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, userId: string): Promise<string> {
   // Coba via RPC yang didefinisikan di PRD
   const { data: rpcNumber, error: rpcError } = await supabase.rpc('generate_invoice_number', {
     p_user_id: userId,
@@ -29,7 +29,7 @@ async function getNextInvoiceNumber(supabase: any, userId: string): Promise<stri
     return rpcNumber as string
   }
 
-  // Fallback: baca invoice_settings lalu update counter (dengan upsert agar aman jika baris belum ada)
+  // Fallback: baca invoice_settings lalu update counter tanpa menimpa business_name profil user
   const { data: settings } = await supabase
     .from('invoice_settings')
     .select('invoice_prefix, last_invoice_number')
@@ -39,14 +39,21 @@ async function getNextInvoiceNumber(supabase: any, userId: string): Promise<stri
   const prefix = settings?.invoice_prefix || 'INV'
   const nextNum = (settings?.last_invoice_number || 0) + 1
 
-  await supabase
-    .from('invoice_settings')
-    .upsert({
-      user_id: userId,
-      business_name: 'Usaha Saya',
-      invoice_prefix: prefix,
-      last_invoice_number: nextNum,
-    }, { onConflict: 'user_id' })
+  if (settings) {
+    await supabase
+      .from('invoice_settings')
+      .update({ last_invoice_number: nextNum })
+      .eq('user_id', userId)
+  } else {
+    await supabase
+      .from('invoice_settings')
+      .insert({
+        user_id: userId,
+        business_name: 'Usaha Saya',
+        invoice_prefix: prefix,
+        last_invoice_number: nextNum,
+      })
+  }
 
   return generateInvoiceNumber(prefix, nextNum, 4)
 }
@@ -84,7 +91,7 @@ export async function createInvoiceAction(
   let invoiceNumber: string
   try {
     invoiceNumber = await getNextInvoiceNumber(supabase, user.id)
-  } catch (err: any) {
+  } catch {
     invoiceNumber = `INV-${Date.now().toString().slice(-4)}`
   }
 
@@ -155,6 +162,11 @@ export async function updateInvoiceStatusAction(
   id: string,
   newStatus: InvoiceStatus
 ) {
+  const statusValidation = z.enum(['draft', 'issued', 'paid', 'cancelled']).safeParse(newStatus)
+  if (!statusValidation.success) {
+    return { error: 'Status invoice tidak valid' }
+  }
+
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 

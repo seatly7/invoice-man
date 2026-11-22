@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { InvoiceMetrics } from '@/types/invoice.types'
 import { formatRupiah } from '@/lib/utils/currency'
 import { Card, CardContent } from '@/components/ui/card'

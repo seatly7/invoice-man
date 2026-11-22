@@ -171,18 +171,27 @@ export function InvoiceForm({
       })),
     }
 
+    const toastId = toast.loading(
+      status === 'issued' ? 'Menerbitkan invoice baru...' : 'Menyimpan draft invoice...'
+    )
+
     startTransition(async () => {
-      const res = await createInvoiceAction(payload)
-      if (res.error) {
-        setErrorMessage(res.error)
-        toast.error('Gagal membuat invoice', { description: res.error })
-      } else if (res.invoiceId) {
-        toast.success(
-          status === 'issued'
-            ? 'Invoice berhasil diterbitkan!'
-            : 'Draft invoice berhasil disimpan!'
-        )
-        router.push(`/invoices/${res.invoiceId}`)
+      try {
+        const res = await createInvoiceAction(payload)
+        if (res.error) {
+          setErrorMessage(res.error)
+          toast.error('Gagal membuat invoice', { id: toastId, description: res.error })
+        } else if (res.invoiceId) {
+          toast.success(
+            status === 'issued'
+              ? 'Invoice berhasil diterbitkan!'
+              : 'Draft invoice berhasil disimpan!',
+            { id: toastId }
+          )
+          router.push(`/invoices/${res.invoiceId}`)
+        }
+      } catch {
+        toast.error('Terjadi kesalahan saat memproses invoice', { id: toastId })
       }
     })
   }
@@ -369,7 +378,7 @@ export function InvoiceForm({
                         <Input
                           type="number"
                           min={0}
-                          value={it.unitPrice === 0 ? '' : it.unitPrice}
+                          value={it.unitPrice}
                           onChange={(e) => handlePriceChange(it.id, Number(e.target.value) || 0)}
                           className="h-9 pl-7 font-mono text-xs"
                         />
@@ -435,7 +444,7 @@ export function InvoiceForm({
                     type="number"
                     min={0}
                     placeholder="0"
-                    value={discountAmount === 0 ? '' : discountAmount}
+                    value={discountAmount}
                     onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
                     className="h-9 font-mono text-right text-sm"
                   />

@@ -1,6 +1,5 @@
 'use client'
 
-import * as React from 'react'
 import { useActionState, useEffect, useState } from 'react'
 import { updateSettingsAction, type SettingsActionResult } from '@/lib/actions/settings.actions'
 import { InvoiceSettings } from '@/types/settings.types'
@@ -37,12 +36,20 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
 
   useEffect(() => {
     if (state?.success) {
-      toast.success('Pengaturan profil usaha berhasil disimpan!')
+      toast.success('Pengaturan profil usaha berhasil disimpan!', { id: 'settings-save' })
+    } else if (state?.error) {
+      toast.error('Gagal menyimpan pengaturan', { id: 'settings-save', description: state.error })
     }
   }, [state])
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form
+      action={formAction}
+      onSubmit={() => {
+        toast.loading('Menyimpan pengaturan profil usaha...', { id: 'settings-save' })
+      }}
+      className="space-y-5"
+    >
       {/* Alert Error */}
       {state?.error && (
         <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-sm">

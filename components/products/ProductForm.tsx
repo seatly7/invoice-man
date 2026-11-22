@@ -1,6 +1,5 @@
 'use client'
 
-import * as React from 'react'
 import { useActionState, useEffect, useState } from 'react'
 import { upsertProductAction, type ProductActionResult } from '@/lib/actions/product.actions'
 import { Product } from '@/types/product.types'
@@ -30,15 +29,30 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
 
   useEffect(() => {
     if (state?.success) {
-      toast.success(product ? 'Barang berhasil diperbarui' : 'Barang baru berhasil ditambahkan')
+      toast.success(
+        product ? 'Barang berhasil diperbarui' : 'Barang baru berhasil ditambahkan',
+        { id: 'product-save' }
+      )
       onSuccess?.()
+    } else if (state?.error) {
+      toast.error('Gagal menyimpan barang', { id: 'product-save', description: state.error })
     }
   }, [state, product, onSuccess])
 
   return (
-    <form action={formAction} className="space-y-4">
-      {/* Hidden ID jika mode Edit */}
+    <form
+      action={formAction}
+      onSubmit={() => {
+        toast.loading(
+          product ? 'Menyimpan perubahan barang...' : 'Menambahkan barang baru...',
+          { id: 'product-save' }
+        )
+      }}
+      className="space-y-4"
+    >
+      {/* Hidden ID & Status jika mode Edit */}
       {product?.id && <input type="hidden" name="id" value={product.id} />}
+      <input type="hidden" name="isActive" value={String(product ? product.isActive : true)} />
 
       {/* Alert Error */}
       {state?.error && (
@@ -83,7 +97,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             type="number"
             min={0}
             step="100"
-            value={price === 0 ? '' : price}
+            value={price}
             onChange={(e) => setPrice(Number(e.target.value) || 0)}
             placeholder="0"
             required

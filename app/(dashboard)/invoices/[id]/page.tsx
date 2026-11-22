@@ -1,9 +1,11 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { connection } from 'next/server'
 import { getInvoiceById } from '@/lib/queries/invoice.queries'
 import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { InvoiceStatusBadge } from '@/components/invoice/InvoiceStatusBadge'
+import { InvoiceDetailActions } from '@/components/invoice/InvoiceDetailActions'
 import { formatRupiah } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,12 +13,9 @@ import {
   ArrowLeft,
   Printer,
   Receipt,
-  MessageCircle,
-  Calendar,
   User,
   Phone,
   MapPin,
-  Share2,
   CreditCard,
 } from 'lucide-react'
 
@@ -39,6 +38,7 @@ export default async function InvoiceDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  await connection()
   const { id } = await params
 
   const [invoice, settings] = await Promise.all([
@@ -216,7 +216,7 @@ export default async function InvoiceDetailPage({
                 </Link>
 
                 {/* Kirim WhatsApp */}
-                {invoice.customerPhone ? (
+                {/* {invoice.customerPhone ? (
                   <a
                     href={waLink}
                     target="_blank"
@@ -245,8 +245,15 @@ export default async function InvoiceDetailPage({
                       <p className="text-[11px] text-zinc-400">Klien tidak memiliki no. telepon</p>
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
+
+              {/* Aksi Ubah Status & Hapus */}
+              <InvoiceDetailActions
+                invoiceId={invoice.id}
+                invoiceNumber={invoice.invoiceNumber}
+                status={invoice.status}
+              />
             </CardContent>
           </Card>
 

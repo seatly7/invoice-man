@@ -1,3 +1,4 @@
+import { connection } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { InvoiceSettings } from '@/types/settings.types'
 
@@ -6,6 +7,7 @@ import { InvoiceSettings } from '@/types/settings.types'
  * Mengembalikan objek InvoiceSettings dengan fallback default jika data belum tersimpan.
  */
 export async function getInvoiceSettings(): Promise<InvoiceSettings | null> {
+  await connection()
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -32,8 +34,8 @@ export async function getInvoiceSettings(): Promise<InvoiceSettings | null> {
       lastInvoiceNumber: 0,
       defaultTaxRate: 11,
       footerNote: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: '1970-01-01T00:00:00Z',
+      updatedAt: '1970-01-01T00:00:00Z',
     }
   }
 

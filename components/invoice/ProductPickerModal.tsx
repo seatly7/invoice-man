@@ -1,7 +1,6 @@
 'use client'
 
-import * as React from 'react'
-import { useState } from 'react'
+import { FormEvent, useDeferredValue, useEffect, useState } from 'react'
 import { Product } from '@/types/product.types'
 import { formatRupiah } from '@/lib/utils/currency'
 import { ResponsiveModal } from '@/components/ui/responsive-modal'
@@ -23,14 +22,14 @@ export function ProductPickerModal({
   onSelectProduct,
 }: ProductPickerModalProps) {
   const [search, setSearch] = useState('')
-  const deferredSearch = React.useDeferredValue(search)
+  const deferredSearch = useDeferredValue(search)
   const [manualName, setManualName] = useState('')
   const [manualPrice, setManualPrice] = useState<number>(0)
   const [manualUnit, setManualUnit] = useState('pcs')
   const [isManualMode, setIsManualMode] = useState(false)
 
   // Bersihkan state form & pencarian saat modal ditutup
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) {
       setSearch('')
       setManualName('')
@@ -56,7 +55,7 @@ export function ProductPickerModal({
     onOpenChange(false)
   }
 
-  function handleAddManual(e: React.FormEvent) {
+  function handleAddManual(e: FormEvent) {
     e.preventDefault()
     if (!manualName.trim()) return
 
@@ -156,7 +155,7 @@ export function ProductPickerModal({
                   type="number"
                   min={0}
                   placeholder="0"
-                  value={manualPrice === 0 ? '' : manualPrice}
+                  value={manualPrice}
                   onChange={(e) => setManualPrice(Number(e.target.value) || 0)}
                   required
                   className="h-11 font-mono text-sm rounded-xl"

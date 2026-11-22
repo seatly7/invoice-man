@@ -1,11 +1,12 @@
 'use client'
 
-import * as React from 'react'
+import { useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, Package, Settings, Store, LogOut } from 'lucide-react'
+import { FileText, Package, Settings, Store, LogOut, Loader2 } from 'lucide-react'
 import { signOutAction } from '@/lib/actions/auth.actions'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const NAV_ITEMS = [
   {
@@ -32,6 +33,18 @@ export interface SidebarProps {
 
 export function Sidebar({ businessName, userEmail }: SidebarProps) {
   const pathname = usePathname()
+  const [isLoggingOut, startLoggingOut] = useTransition()
+
+  function handleSignOut() {
+    const toastId = toast.loading('Sedang keluar dari akun...')
+    startLoggingOut(async () => {
+      try {
+        await signOutAction()
+      } catch {
+        toast.error('Gagal keluar', { id: toastId })
+      }
+    })
+  }
 
   return (
     <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 z-30 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 print:hidden">
@@ -107,11 +120,16 @@ export function Sidebar({ businessName, userEmail }: SidebarProps) {
           </div>
           <button
             type="button"
-            onClick={() => signOutAction()}
+            disabled={isLoggingOut}
+            onClick={handleSignOut}
             title="Keluar Akun"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <LogOut className="w-4 h-4" />
+            {isLoggingOut ? (
+              <Loader2 className="w-4 h-4 animate-spin text-red-600" />
+            ) : (
+              <LogOut className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

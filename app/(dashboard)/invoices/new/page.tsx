@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { connection } from 'next/server'
 import { getProducts } from '@/lib/queries/product.queries'
 import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { InvoiceForm } from '@/components/invoice/InvoiceForm'
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 export const instant = false
 
 export default async function NewInvoicePage() {
+  await connection()
   // Ambil produk katalog yang aktif dan default tarif pajak pengguna
   const [productsRes, settings] = await Promise.all([
     getProducts({ isActiveOnly: true, pageSize: 100 }),

@@ -1,7 +1,6 @@
 'use client'
 
-import * as React from 'react'
-import { useState, useTransition } from 'react'
+import { useDeferredValue, useState, useTransition } from 'react'
 import { Product } from '@/types/product.types'
 import { ProductModal } from './ProductModal'
 import { toggleProductStatusAction, deleteProductAction } from '@/lib/actions/product.actions'
@@ -25,7 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Search, MoreVertical, Edit2, PowerOff, CheckCircle2, PackageOpen, Trash2 } from 'lucide-react'
+import { Plus, Search, MoreVertical, Edit2, PowerOff, CheckCircle2, PackageOpen, Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export interface ProductListClientProps {
@@ -34,11 +33,12 @@ export interface ProductListClientProps {
 
 export function ProductListClient({ initialProducts }: ProductListClientProps) {
   const [search, setSearch] = useState('')
-  const deferredSearch = React.useDeferredValue(search)
+  const deferredSearch = useDeferredValue(search)
   const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('active')
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [processingAction, setProcessingAction] = useState<{ id: string; type: 'toggle' | 'delete' } | null>(null)
 
   // Filter lokal dengan deferred value untuk rendering halus tanpa freeze
   const filteredProducts = initialProducts.filter((p) => {
@@ -64,28 +64,49 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
   }
 
   function handleToggleStatus(product: Product) {
+    setProcessingAction({ id: product.id, type: 'toggle' })
+    const toastId = toast.loading(
+      product.isActive ? `Menonaktifkan "${product.name}"...` : `Mengaktifkan "${product.name}"...`
+    )
+
     startTransition(async () => {
-      const res = await toggleProductStatusAction(product.id, product.isActive)
-      if (res.error) {
-        toast.error('Gagal mengubah status', { description: res.error })
-      } else {
-        toast.success(
-          product.isActive
-            ? `Barang "${product.name}" dinonaktifkan`
-            : `Barang "${product.name}" diaktifkan kembali`
-        )
+      try {
+        const res = await toggleProductStatusAction(product.id, product.isActive)
+        if (res.error) {
+          toast.error('Gagal mengubah status', { id: toastId, description: res.error })
+        } else {
+          toast.success(
+            product.isActive
+              ? `Barang "${product.name}" dinonaktifkan`
+              : `Barang "${product.name}" diaktifkan kembali`,
+            { id: toastId }
+          )
+        }
+      } catch {
+        toast.error('Terjadi kesalahan saat mengubah status', { id: toastId })
+      } finally {
+        setProcessingAction(null)
       }
     })
   }
 
   function handleDelete(product: Product) {
     if (!window.confirm(`Hapus permanen barang "${product.name}"?`)) return
+    setProcessingAction({ id: product.id, type: 'delete' })
+    const toastId = toast.loading(`Menghapus permanen "${product.name}"...`)
+
     startTransition(async () => {
-      const res = await deleteProductAction(product.id)
-      if (res.error) {
-        toast.error('Gagal menghapus barang', { description: res.error })
-      } else {
-        toast.success(`Barang "${product.name}" berhasil dihapus permanen`)
+      try {
+        const res = await deleteProductAction(product.id)
+        if (res.error) {
+          toast.error('Gagal menghapus barang', { id: toastId, description: res.error })
+        } else {
+          toast.success(`Barang "${product.name}" berhasil dihapus permanen`, { id: toastId })
+        }
+      } catch {
+        toast.error('Terjadi kesalahan saat menghapus barang', { id: toastId })
+      } finally {
+        setProcessingAction(null)
       }
     })
   }
@@ -162,6 +183,14 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
         </div>
       </div>
 
+      {/* Loading Banner Sinkronisasi Data */}
+      {isPending && !processingAction && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-300 animate-pulse">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-500" />
+          <span>Menyinkronkan katalog barang...</span>
+        </div>
+      )}
+
       {/* Konten Daftar Barang */}
       {filteredProducts.length === 0 ? (
         /* Empty State */
@@ -202,175 +231,221 @@ export function ProductListClient({ initialProducts }: ProductListClientProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((p) => (
-                  <TableRow key={p.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
-                    <TableCell className="font-mono text-xs text-zinc-500 uppercase">
-                      {p.sku}
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {p.name}
-                      </div>
-                      {p.description && (
-                        <div className="text-xs text-zinc-400 truncate max-w-md mt-0.5">
-                          {p.description}
+                {filteredProducts.map((p) => {
+                  const isItemProcessing = processingAction?.id === p.id
+                  return (
+                    <TableRow
+                      key={p.id}
+                      className={`hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors ${
+                        isItemProcessing ? 'bg-amber-50/30 dark:bg-amber-950/20 opacity-70' : ''
+                      }`}
+                    >
+                      <TableCell className="font-mono text-xs text-zinc-500 uppercase">
+                        {p.sku}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {p.name}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {p.unit}
-                    </TableCell>
-                    <TableCell className="text-right font-mono font-medium text-sm">
-                      {formatRupiah(p.price)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={p.isActive ? 'default' : 'secondary'}
-                        className={
-                          p.isActive
-                            ? 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 border-emerald-200 dark:border-emerald-800'
-                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
-                        }
-                      >
-                        {p.isActive ? 'Aktif' : 'Nonaktif'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="h-8 w-8 rounded-md inline-flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer">
-                            <Edit2 className="w-4 h-4 mr-2" />
-                            <span>Ubah Data</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(p)}
-                            disabled={isPending}
-                            className={`cursor-pointer ${
+                        {p.description && (
+                          <div className="text-xs text-zinc-400 truncate max-w-md mt-0.5">
+                            {p.description}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-zinc-600 dark:text-zinc-400">
+                        {p.unit}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-medium text-sm">
+                        {formatRupiah(p.price)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {isItemProcessing ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 animate-pulse">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600 dark:text-amber-400" />
+                            {processingAction.type === 'toggle' ? 'Mengubah...' : 'Menghapus...'}
+                          </span>
+                        ) : (
+                          <Badge
+                            variant={p.isActive ? 'default' : 'secondary'}
+                            className={
                               p.isActive
-                                ? 'text-amber-600 focus:text-amber-600'
-                                : 'text-emerald-600 focus:text-emerald-600'
-                            }`}
+                                ? 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 border-emerald-200 dark:border-emerald-800'
+                                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                            }
                           >
-                            {p.isActive ? (
-                              <>
-                                <PowerOff className="w-4 h-4 mr-2" />
-                                <span>Nonaktifkan</span>
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                <span>Aktifkan</span>
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(p)}
-                            disabled={isPending}
-                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            <span>Hapus Permanen</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                            {p.isActive ? 'Aktif' : 'Nonaktif'}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isItemProcessing ? (
+                          <div className="h-8 w-8 inline-flex items-center justify-center">
+                            <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
+                          </div>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              disabled={isPending}
+                              className="h-8 w-8 rounded-md inline-flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer transition-colors disabled:opacity-50"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer">
+                                <Edit2 className="w-4 h-4 mr-2" />
+                                <span>Ubah Data</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleToggleStatus(p)}
+                                disabled={isPending}
+                                className={`cursor-pointer ${
+                                  p.isActive
+                                    ? 'text-amber-600 focus:text-amber-600'
+                                    : 'text-emerald-600 focus:text-emerald-600'
+                                }`}
+                              >
+                                {p.isActive ? (
+                                  <>
+                                    <PowerOff className="w-4 h-4 mr-2" />
+                                    <span>Nonaktifkan</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    <span>Aktifkan</span>
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(p)}
+                                disabled={isPending}
+                                className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                <span>Hapus Permanen</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
 
           {/* Tampilan Mobile: Card Grid (Mobile-First, Ramah Layar Sentuh) */}
           <div className="grid grid-cols-1 gap-2.5 md:hidden">
-            {filteredProducts.map((p) => (
-              <Card
-                key={p.id}
-                className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl overflow-hidden"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wide bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
-                          {p.sku}
-                        </span>
-                        <Badge
-                          variant={p.isActive ? 'default' : 'secondary'}
-                          className={`text-xs px-2 py-0.5 ${
-                            p.isActive
-                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                              : 'bg-zinc-100 text-zinc-500'
-                          }`}
-                        >
-                          {p.isActive ? 'Aktif' : 'Nonaktif'}
-                        </Badge>
+            {filteredProducts.map((p) => {
+              const isItemProcessing = processingAction?.id === p.id
+              return (
+                <Card
+                  key={p.id}
+                  className={`bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl overflow-hidden transition-colors ${
+                    isItemProcessing ? 'ring-2 ring-amber-500/40 bg-amber-50/20 dark:bg-amber-950/20 opacity-75' : ''
+                  }`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wide bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+                            {p.sku}
+                          </span>
+                          {isItemProcessing ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 animate-pulse">
+                              <Loader2 className="w-3 h-3 animate-spin text-amber-600 dark:text-amber-400" />
+                              {processingAction.type === 'toggle' ? 'Mengubah...' : 'Menghapus...'}
+                            </span>
+                          ) : (
+                            <Badge
+                              variant={p.isActive ? 'default' : 'secondary'}
+                              className={`text-xs px-2 py-0.5 ${
+                                p.isActive
+                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                                  : 'bg-zinc-100 text-zinc-500'
+                              }`}
+                            >
+                              {p.isActive ? 'Aktif' : 'Nonaktif'}
+                            </Badge>
+                          )}
+                        </div>
+                        <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 leading-snug truncate">
+                          {p.name}
+                        </h4>
+                        {p.description && (
+                          <p className="text-xs text-zinc-400 line-clamp-1 mt-0.5">
+                            {p.description}
+                          </p>
+                        )}
                       </div>
-                      <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 leading-snug truncate">
-                        {p.name}
-                      </h4>
-                      {p.description && (
-                        <p className="text-xs text-zinc-400 line-clamp-1 mt-0.5">
-                          {p.description}
-                        </p>
+
+                      {/* Menu Aksi */}
+                      {isItemProcessing ? (
+                        <div className="h-9 w-9 -mr-1.5 -mt-1 inline-flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
+                        </div>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            disabled={isPending}
+                            className="h-9 w-9 -mr-1.5 -mt-1 rounded-lg inline-flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors disabled:opacity-50"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer">
+                              <Edit2 className="w-4 h-4 mr-2" />
+                              <span>Ubah Data</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleToggleStatus(p)}
+                              disabled={isPending}
+                              className={`cursor-pointer ${p.isActive ? 'text-amber-600' : 'text-emerald-600'}`}
+                            >
+                              {p.isActive ? (
+                                <>
+                                  <PowerOff className="w-4 h-4 mr-2" />
+                                  <span>Nonaktifkan</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                                  <span>Aktifkan</span>
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(p)}
+                              disabled={isPending}
+                              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              <span>Hapus Permanen</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
 
-                    {/* Menu Aksi */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="h-9 w-9 -mr-1.5 -mt-1 rounded-lg inline-flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors">
-                        <MoreVertical className="w-4 h-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer">
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          <span>Ubah Data</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleToggleStatus(p)}
-                          className={`cursor-pointer ${p.isActive ? 'text-amber-600' : 'text-emerald-600'}`}
-                        >
-                          {p.isActive ? (
-                            <>
-                              <PowerOff className="w-4 h-4 mr-2" />
-                              <span>Nonaktifkan</span>
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              <span>Aktifkan</span>
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(p)}
-                          disabled={isPending}
-                          className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          <span>Hapus Permanen</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-                    <span className="text-xs text-zinc-500 font-medium">
-                      Per {p.unit}
-                    </span>
-                    <span className="font-mono font-bold text-base text-zinc-900 dark:text-zinc-100">
-                      {formatRupiah(p.price)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
+                      <span className="text-xs text-zinc-500 font-medium">
+                        Per {p.unit}
+                      </span>
+                      <span className="font-mono font-bold text-base text-zinc-900 dark:text-zinc-100">
+                        {formatRupiah(p.price)}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </>
       )}

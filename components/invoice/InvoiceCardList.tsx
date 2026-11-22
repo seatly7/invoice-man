@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { InvoiceListItem, InvoiceStatus } from '@/types/invoice.types'
+import { InvoiceListItem } from '@/types/invoice.types'
 import { InvoiceStatusBadge } from './InvoiceStatusBadge'
 import { updateInvoiceStatusAction, deleteInvoiceAction } from '@/lib/actions/invoice.actions'
 import { formatRupiah } from '@/lib/utils/currency'
@@ -37,6 +37,7 @@ import {
   Trash2,
   FileQuestion,
   Calendar,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -49,6 +50,7 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
   const deferredSearch = React.useDeferredValue(search)
   const [statusFilter, setStatusFilter] = useState<'all' | 'issued' | 'paid' | 'draft'>('all')
   const [isPending, startTransition] = useTransition()
+  const [processingAction, setProcessingAction] = useState<{ id: string; type: 'mark-paid' | 'delete' } | null>(null)
 
   // Filter lokal dengan deferred value untuk performa rendering ketik yang mulus
   const filteredInvoices = initialInvoices.filter((inv) => {
@@ -65,12 +67,21 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
   })
 
   function handleMarkAsPaid(inv: InvoiceListItem) {
+    setProcessingAction({ id: inv.id, type: 'mark-paid' })
+    const toastId = toast.loading(`Menandai invoice ${inv.invoiceNumber} lunas...`)
+
     startTransition(async () => {
-      const res = await updateInvoiceStatusAction(inv.id, 'paid')
-      if (res.error) {
-        toast.error('Gagal memperbarui status', { description: res.error })
-      } else {
-        toast.success(`Invoice ${inv.invoiceNumber} ditandai Lunas`)
+      try {
+        const res = await updateInvoiceStatusAction(inv.id, 'paid')
+        if (res.error) {
+          toast.error('Gagal memperbarui status', { id: toastId, description: res.error })
+        } else {
+          toast.success(`Invoice ${inv.invoiceNumber} berhasil ditandai Lunas`, { id: toastId })
+        }
+      } catch {
+        toast.error('Terjadi kesalahan saat memproses status', { id: toastId })
+      } finally {
+        setProcessingAction(null)
       }
     })
   }
@@ -79,12 +90,21 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
     if (!confirm(`Hapus invoice ${inv.invoiceNumber}? Tindakan ini tidak dapat dibatalkan.`)) {
       return
     }
+    setProcessingAction({ id: inv.id, type: 'delete' })
+    const toastId = toast.loading(`Menghapus invoice ${inv.invoiceNumber}...`)
+
     startTransition(async () => {
-      const res = await deleteInvoiceAction(inv.id)
-      if (res.error) {
-        toast.error('Gagal menghapus', { description: res.error })
-      } else {
-        toast.success(`Invoice ${inv.invoiceNumber} telah dihapus`)
+      try {
+        const res = await deleteInvoiceAction(inv.id)
+        if (res.error) {
+          toast.error('Gagal menghapus', { id: toastId, description: res.error })
+        } else {
+          toast.success(`Invoice ${inv.invoiceNumber} telah dihapus`, { id: toastId })
+        }
+      } catch {
+        toast.error('Terjadi kesalahan saat menghapus invoice', { id: toastId })
+      } finally {
+        setProcessingAction(null)
       }
     })
   }
@@ -172,6 +192,14 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
         </div>
       </div>
 
+      {/* Loading Banner Sinkronisasi Data */}
+      {isPending && !processingAction && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-300 animate-pulse">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-500" />
+          <span>Menyinkronkan daftar invoice...</span>
+        </div>
+      )}
+
       {/* Konten Daftar Tagihan */}
       {filteredInvoices.length === 0 ? (
         /* Empty State */
@@ -216,184 +244,259 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.map((inv) => (
-                  <TableRow key={inv.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
-                    <TableCell className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                      <Link href={`/invoices/${inv.id}`} className="hover:underline">
-                        {inv.invoiceNumber}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {inv.customerName}
-                      </div>
-                      {inv.customerPhone && (
-                        <div className="text-xs text-zinc-400">
-                          {inv.customerPhone}
+                {filteredInvoices.map((inv) => {
+                  const isItemProcessing = processingAction?.id === inv.id
+                  return (
+                    <TableRow
+                      key={inv.id}
+                      className={`hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors ${
+                        isItemProcessing ? 'bg-emerald-50/30 dark:bg-emerald-950/20 opacity-70' : ''
+                      }`}
+                    >
+                      <TableCell className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                        <Link href={`/invoices/${inv.id}`} className="hover:underline">
+                          {inv.invoiceNumber}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {inv.customerName}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-zinc-600 dark:text-zinc-400">
-                      {formatDate(inv.issueDate)}
-                    </TableCell>
-                    <TableCell className="text-xs text-zinc-600 dark:text-zinc-400">
-                      {inv.dueDate ? formatDate(inv.dueDate) : '-'}
-                    </TableCell>
-                    <TableCell className="text-right font-mono font-semibold text-sm">
-                      {formatRupiah(inv.grandTotal)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <InvoiceStatusBadge status={inv.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="h-8 w-8 rounded-md inline-flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <Link href={`/invoices/${inv.id}`}>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Eye className="w-4 h-4 mr-2" />
-                              <span>Lihat Detail</span>
-                            </DropdownMenuItem>
-                          </Link>
-                          <Link href={`/invoices/${inv.id}/print`}>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Printer className="w-4 h-4 mr-2" />
-                              <span>Cetak Faktur A4</span>
-                            </DropdownMenuItem>
-                          </Link>
-                          <Link href={`/invoices/${inv.id}/thermal`}>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Receipt className="w-4 h-4 mr-2" />
-                              <span>Cetak Struk 80mm</span>
-                            </DropdownMenuItem>
-                          </Link>
-                          {inv.status !== 'paid' && (
-                            <>
+                        {inv.customerPhone && (
+                          <div className="text-xs text-zinc-400">
+                            {inv.customerPhone}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-zinc-600 dark:text-zinc-400">
+                        {formatDate(inv.issueDate)}
+                      </TableCell>
+                      <TableCell className="text-xs text-zinc-600 dark:text-zinc-400">
+                        {inv.dueDate ? formatDate(inv.dueDate) : '-'}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-semibold text-sm">
+                        {formatRupiah(inv.grandTotal)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {isItemProcessing ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-pulse">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400" />
+                            {processingAction.type === 'mark-paid' ? 'Menandai Lunas...' : 'Menghapus...'}
+                          </span>
+                        ) : (
+                          <InvoiceStatusBadge status={inv.status} />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isItemProcessing ? (
+                          <div className="h-8 w-8 inline-flex items-center justify-center">
+                            <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
+                          </div>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              disabled={isPending}
+                              className="h-8 w-8 rounded-md inline-flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer transition-colors disabled:opacity-50"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <Link href={`/invoices/${inv.id}`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  <span>Lihat Detail</span>
+                                </DropdownMenuItem>
+                              </Link>
+                              <Link href={`/invoices/${inv.id}/print`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                  <Printer className="w-4 h-4 mr-2" />
+                                  <span>Cetak Faktur A4</span>
+                                </DropdownMenuItem>
+                              </Link>
+                              <Link href={`/invoices/${inv.id}/thermal`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                  <Receipt className="w-4 h-4 mr-2" />
+                                  <span>Cetak Struk 80mm</span>
+                                </DropdownMenuItem>
+                              </Link>
+                              {inv.status !== 'paid' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleMarkAsPaid(inv)}
+                                    disabled={isPending}
+                                    className="cursor-pointer text-emerald-600 focus:text-emerald-600"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    <span>Tandai Lunas</span>
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onClick={() => handleMarkAsPaid(inv)}
-                                className="cursor-pointer text-emerald-600"
+                                onClick={() => handleDelete(inv)}
+                                disabled={isPending}
+                                className="cursor-pointer text-red-600 focus:text-red-600"
                               >
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                <span>Tandai Lunas</span>
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                <span>Hapus Invoice</span>
                               </DropdownMenuItem>
-                            </>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(inv)}
-                            className="cursor-pointer text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            <span>Hapus Invoice</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
 
           {/* Tampilan Mobile: Card Grid (Mobile-First sesuai rancangan Google Stitch) */}
           <div className="grid grid-cols-1 gap-2.5 md:hidden">
-            {filteredInvoices.map((inv) => (
-              <Card
-                key={inv.id}
-                className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl overflow-hidden active:bg-zinc-50/50 transition-colors"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      {/* Header baris atas: No Invoice & Status Badge */}
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Link
-                          href={`/invoices/${inv.id}`}
-                          className="font-mono text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:underline"
-                        >
-                          {inv.invoiceNumber}
-                        </Link>
-                        <InvoiceStatusBadge status={inv.status} />
+            {filteredInvoices.map((inv) => {
+              const isItemProcessing = processingAction?.id === inv.id
+              return (
+                <Card
+                  key={inv.id}
+                  className={`bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs rounded-2xl overflow-hidden active:bg-zinc-50/50 transition-colors ${
+                    isItemProcessing
+                      ? 'ring-2 ring-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-950/20 opacity-75'
+                      : ''
+                  }`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        {/* Header baris atas: No Invoice & Status Badge */}
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Link
+                            href={`/invoices/${inv.id}`}
+                            className="font-mono text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:underline"
+                          >
+                            {inv.invoiceNumber}
+                          </Link>
+                          {isItemProcessing ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 animate-pulse">
+                              <Loader2 className="w-3 h-3 animate-spin text-emerald-600 dark:text-emerald-400" />
+                              {processingAction.type === 'mark-paid' ? 'Menandai Lunas...' : 'Menghapus...'}
+                            </span>
+                          ) : (
+                            <InvoiceStatusBadge status={inv.status} />
+                          )}
+                        </div>
+
+                        {/* Nama Pelanggan */}
+                        <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 leading-snug truncate">
+                          {inv.customerName}
+                        </h4>
+
+                        {/* Info Tanggal */}
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                          <Calendar className="w-3 h-3 text-zinc-400 shrink-0" />
+                          <span>{formatDate(inv.issueDate)}</span>
+                          {inv.dueDate && (
+                            <span>· Tempo: {formatDate(inv.dueDate)}</span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Nama Pelanggan */}
-                      <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 leading-snug truncate">
-                        {inv.customerName}
-                      </h4>
-
-                      {/* Info Tanggal */}
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                        <Calendar className="w-3 h-3 text-zinc-400 shrink-0" />
-                        <span>{formatDate(inv.issueDate)}</span>
-                        {inv.dueDate && (
-                          <span>· Tempo: {formatDate(inv.dueDate)}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Menu Aksi Titik Tiga */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="h-9 w-9 -mr-1.5 -mt-1 rounded-md inline-flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors">
-                        <MoreVertical className="w-4 h-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <Link href={`/invoices/${inv.id}`}>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Eye className="w-4 h-4 mr-2" />
-                            <span>Lihat Detail</span>
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href={`/invoices/${inv.id}/print`}>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Printer className="w-4 h-4 mr-2" />
-                            <span>Cetak Faktur A4</span>
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href={`/invoices/${inv.id}/thermal`}>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Receipt className="w-4 h-4 mr-2" />
-                            <span>Cetak Struk 80mm</span>
-                          </DropdownMenuItem>
-                        </Link>
-                        {inv.status !== 'paid' && (
-                          <>
+                      {/* Menu Aksi Titik Tiga */}
+                      {isItemProcessing ? (
+                        <div className="h-9 w-9 -mr-1.5 -mt-1 inline-flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
+                        </div>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            disabled={isPending}
+                            className="h-9 w-9 -mr-1.5 -mt-1 rounded-md inline-flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors disabled:opacity-50"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <Link href={`/invoices/${inv.id}`}>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <Eye className="w-4 h-4 mr-2" />
+                                <span>Lihat Detail</span>
+                              </DropdownMenuItem>
+                            </Link>
+                            <Link href={`/invoices/${inv.id}/print`}>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <Printer className="w-4 h-4 mr-2" />
+                                <span>Cetak Faktur A4</span>
+                              </DropdownMenuItem>
+                            </Link>
+                            <Link href={`/invoices/${inv.id}/thermal`}>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <Receipt className="w-4 h-4 mr-2" />
+                                <span>Cetak Struk 80mm</span>
+                              </DropdownMenuItem>
+                            </Link>
+                            {inv.status !== 'paid' && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleMarkAsPaid(inv)}
+                                  disabled={isPending}
+                                  className="cursor-pointer text-emerald-600 focus:text-emerald-600"
+                                >
+                                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                                  <span>Tandai Lunas</span>
+                                </DropdownMenuItem>
+                              </>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleMarkAsPaid(inv)}
-                              className="cursor-pointer text-emerald-600"
+                              onClick={() => handleDelete(inv)}
+                              disabled={isPending}
+                              className="cursor-pointer text-red-600 focus:text-red-600"
                             >
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              <span>Tandai Lunas</span>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              <span>Hapus Invoice</span>
                             </DropdownMenuItem>
-                          </>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(inv)}
-                          className="cursor-pointer text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          <span>Hapus Invoice</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
 
-                  {/* Baris Bawah: Total Rupiah & Quick Button */}
-                  <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-                    <span className="text-xs text-zinc-500">
-                      {inv.itemCount} item barang
-                    </span>
-                    <span className="font-mono font-bold text-base text-zinc-950 dark:text-white">
-                      {formatRupiah(inv.grandTotal)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    {/* Baris Bawah: Total Rupiah & Quick Button */}
+                    <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs text-zinc-500 block">
+                          {inv.itemCount} item barang
+                        </span>
+                        <span className="font-mono font-bold text-base text-zinc-950 dark:text-white">
+                          {formatRupiah(inv.grandTotal)}
+                        </span>
+                      </div>
+
+                      {inv.status !== 'paid' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isPending}
+                          onClick={() => handleMarkAsPaid(inv)}
+                          className="h-8 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 cursor-pointer"
+                        >
+                          {isItemProcessing && processingAction.type === 'mark-paid' ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                              <span>Memproses...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                              <span>Tandai Lunas</span>
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </>
       )}

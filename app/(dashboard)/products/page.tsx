@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { connection } from 'next/server'
 import { getProducts } from '@/lib/queries/product.queries'
 import { ProductListClient } from '@/components/products/ProductListClient'
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 export const instant = false
 
 export default async function ProductsPage() {
+  await connection()
   const { data: products } = await getProducts()
 
   return (
