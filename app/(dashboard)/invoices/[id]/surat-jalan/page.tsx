@@ -110,12 +110,12 @@ export default async function SuratJalanPage({
 
             {/* Judul SURAT JALAN & Shipping Date */}
             <div className="text-right w-[46%] sm:w-auto">
-              <h1 className="text-xl sm:text-3xl font-extrabold uppercase tracking-wide text-black">
+              <h1 className="text-xl sm:text-3xl font-extrabold uppercase tracking-wide text-black whitespace-nowrap">
                 SURAT JALAN
               </h1>
-              <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center gap-0.5 sm:gap-6 mt-2 sm:mt-5 text-xs sm:text-sm">
-                <span className="font-medium text-black">Shipping Date</span>
-                <span className="font-mono font-bold text-black sm:min-w-28 text-right">
+              <div className="flex justify-end items-center gap-2 sm:gap-6 mt-2 sm:mt-5 text-xs sm:text-sm">
+                <span className="font-medium text-black whitespace-nowrap">Shipping Date</span>
+                <span className="font-mono font-bold text-black sm:min-w-28 text-right whitespace-nowrap">
                   {formatDateSlash(invoice.issueDate)}
                 </span>
               </div>

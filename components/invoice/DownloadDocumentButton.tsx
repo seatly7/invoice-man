@@ -42,14 +42,27 @@ export function DownloadDocumentButton({
     setExportFormat(format)
     const toastId = toast.loading(`Sedang memproses unduhan ${format.toUpperCase()} resolusi tinggi...`)
 
+    // Simpan style asli untuk di-restore setelah capture
+    const origInlineStyle = node.getAttribute('style') || ''
+    const isA4Sheet = targetId === 'surat-jalan-sheet' || targetId === 'invoice-print-sheet'
+
     try {
-      // Tunggu font dan render frame stabil
-      await new Promise((r) => setTimeout(r, 150))
+      // Jika lembar A4, standarkan ke 800px desktop layout selama proses capture
+      // agar hasil download di smartphone identik dengan tampilan web desktop (HD 1600px)
+      if (isA4Sheet) {
+        node.style.width = '800px'
+        node.style.minWidth = '800px'
+        node.style.maxWidth = '800px'
+      }
+
+      // Tunggu frame render stabil
+      await new Promise((r) => setTimeout(r, 120))
 
       const options = {
         quality: 0.95,
         pixelRatio: 2, // 2x Retina Resolution untuk hasil tajam bebas blur
         backgroundColor: '#ffffff',
+        width: isA4Sheet ? 800 : undefined,
         style: {
           borderRadius: '0px',
           boxShadow: 'none',
@@ -82,6 +95,9 @@ export function DownloadDocumentButton({
         description: err?.message || 'Pastikan browser mendukung rendering canvas.',
       })
     } finally {
+      if (isA4Sheet) {
+        node.setAttribute('style', origInlineStyle)
+      }
       setIsExporting(false)
       setExportFormat(null)
     }
