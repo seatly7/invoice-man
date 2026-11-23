@@ -62,3 +62,9 @@ export const createInvoiceSchema = z.object({
 
 export type InvoiceItemSchemaInput = z.infer<typeof invoiceItemSchema>
 export type CreateInvoiceSchemaInput = z.infer<typeof createInvoiceSchema>
+
+export const updateInvoiceSchema = createInvoiceSchema.extend({
+  revisionNote: z.string().max(300, 'Catatan revisi maksimal 300 karakter').optional().nullable(),
+})
+
+export type UpdateInvoiceSchemaInput = z.infer<typeof updateInvoiceSchema>

@@ -7,7 +7,8 @@ import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { formatRupiah } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { PrintButton } from '@/components/invoice/PrintButton'
-import { ArrowLeft, Receipt } from 'lucide-react'
+import { DownloadDocumentButton } from '@/components/invoice/DownloadDocumentButton'
+import { ArrowLeft } from 'lucide-react'
 
 export const instant = false
 
@@ -73,16 +74,21 @@ export default async function ThermalInvoicePage({
           </Link>
 
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-xs text-zinc-400">
-              Format Roll 80mm
-            </span>
+            <DownloadDocumentButton
+              targetId="invoice-thermal-sheet"
+              filename={`Struk-${invoice.invoiceNumber}`}
+            />
             <PrintButton label="Cetak Struk" />
           </div>
         </div>
       </div>
 
       {/* Lembar Simulasi Kertas Thermal Struk 80mm */}
-      <div className="max-w-[340px] mx-auto mt-4 sm:mt-8 bg-white text-black font-mono text-xs shadow-md border border-zinc-200 p-5 rounded-lg print:shadow-none print:border-none print:m-0 print:p-1 print:w-[72mm] print:max-w-[72mm] print:rounded-none">
+      <div className="w-full overflow-x-auto p-4 flex justify-center print:p-0 print:m-0 print:overflow-visible">
+        <div
+          id="invoice-thermal-sheet"
+          className="w-[320px] min-w-[320px] max-w-[320px] bg-white text-black font-mono text-xs shadow-md border border-zinc-200/80 p-6 pb-8 rounded-none print:shadow-none print:border-none print:m-0 print:p-1 print:w-[72mm] print:max-w-[72mm]"
+        >
         {/* Header Toko */}
         <div className="text-center space-y-1 pb-3">
           <h2 className="text-base font-extrabold uppercase tracking-tight">
@@ -198,5 +204,6 @@ export default async function ThermalInvoicePage({
         </div>
       </div>
     </div>
+  </div>
   )
 }

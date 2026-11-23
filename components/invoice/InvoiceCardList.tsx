@@ -32,7 +32,10 @@ import {
   MoreVertical,
   Printer,
   Receipt,
+  Download,
+  Truck,
   Eye,
+  Edit2,
   CheckCircle2,
   Trash2,
   FileQuestion,
@@ -307,16 +310,34 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
                                   <span>Lihat Detail</span>
                                 </DropdownMenuItem>
                               </Link>
+                              <Link href={`/invoices/${inv.id}/edit`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                  <Edit2 className="w-4 h-4 mr-2" />
+                                  <span>Ubah / Edit Data</span>
+                                </DropdownMenuItem>
+                              </Link>
                               <Link href={`/invoices/${inv.id}/print`}>
                                 <DropdownMenuItem className="cursor-pointer">
                                   <Printer className="w-4 h-4 mr-2" />
                                   <span>Cetak Faktur A4</span>
                                 </DropdownMenuItem>
                               </Link>
+                              <Link href={`/invoices/${inv.id}/print?download=png`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                  <Download className="w-4 h-4 mr-2" />
+                                  <span>Unduh Gambar (PNG)</span>
+                                </DropdownMenuItem>
+                              </Link>
                               <Link href={`/invoices/${inv.id}/thermal`}>
                                 <DropdownMenuItem className="cursor-pointer">
                                   <Receipt className="w-4 h-4 mr-2" />
                                   <span>Cetak Struk 80mm</span>
+                                </DropdownMenuItem>
+                              </Link>
+                              <Link href={`/invoices/${inv.id}/surat-jalan`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                  <Truck className="w-4 h-4 mr-2" />
+                                  <span>Cetak Surat Jalan</span>
                                 </DropdownMenuItem>
                               </Link>
                               {inv.status !== 'paid' && (
@@ -421,16 +442,34 @@ export function InvoiceCardList({ initialInvoices }: InvoiceCardListProps) {
                                 <span>Lihat Detail</span>
                               </DropdownMenuItem>
                             </Link>
+                            <Link href={`/invoices/${inv.id}/edit`}>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <Edit2 className="w-4 h-4 mr-2" />
+                                <span>Ubah / Edit Data</span>
+                              </DropdownMenuItem>
+                            </Link>
                             <Link href={`/invoices/${inv.id}/print`}>
                               <DropdownMenuItem className="cursor-pointer">
                                 <Printer className="w-4 h-4 mr-2" />
                                 <span>Cetak Faktur A4</span>
                               </DropdownMenuItem>
                             </Link>
+                            <Link href={`/invoices/${inv.id}/print?download=png`}>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <Download className="w-4 h-4 mr-2" />
+                                <span>Unduh Gambar (PNG)</span>
+                              </DropdownMenuItem>
+                            </Link>
                             <Link href={`/invoices/${inv.id}/thermal`}>
                               <DropdownMenuItem className="cursor-pointer">
                                 <Receipt className="w-4 h-4 mr-2" />
                                 <span>Cetak Struk 80mm</span>
+                              </DropdownMenuItem>
+                            </Link>
+                            <Link href={`/invoices/${inv.id}/surat-jalan`}>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <Truck className="w-4 h-4 mr-2" />
+                                <span>Cetak Surat Jalan</span>
                               </DropdownMenuItem>
                             </Link>
                             {inv.status !== 'paid' && (

@@ -7,7 +7,7 @@ import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { InvoiceStatusBadge } from '@/components/invoice/InvoiceStatusBadge'
 import { InvoiceDetailActions } from '@/components/invoice/InvoiceDetailActions'
 import { formatRupiah } from '@/lib/utils/currency'
-import { formatDate } from '@/lib/utils/date'
+import { formatDate, formatDateTime } from '@/lib/utils/date'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   ArrowLeft,
@@ -17,6 +17,11 @@ import {
   Phone,
   MapPin,
   CreditCard,
+  Edit2,
+  History,
+  Download,
+  Truck,
+  MessageCircle,
 } from 'lucide-react'
 
 export const instant = false
@@ -85,6 +90,17 @@ export default async function InvoiceDetailPage({
               Diterbitkan pada {formatDate(invoice.issueDate)}
             </p>
           </div>
+        </div>
+
+        {/* Tombol Edit Cepat di Header */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link
+            href={`/invoices/${invoice.id}/edit`}
+            className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 transition-colors shadow-2xs"
+          >
+            <Edit2 className="w-4 h-4" />
+            <span>Edit Invoice</span>
+          </Link>
         </div>
       </div>
 
@@ -167,6 +183,37 @@ export default async function InvoiceDetailPage({
               </CardContent>
             </Card>
           )}
+
+          {/* Kartu Audit Trail / Riwayat Perubahan */}
+          <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs">
+            <CardContent className="p-4 sm:p-5 space-y-3">
+              <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-1 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <History className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Riwayat Dokumen (Audit Trail)</span>
+                </span>
+                {invoice.updatedAt && invoice.updatedAt !== invoice.createdAt && (
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                    Telah Direvisi
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-zinc-400 block text-[11px]">Waktu Dibuat:</span>
+                  <span className="font-mono text-zinc-700 dark:text-zinc-300 font-medium">
+                    {formatDateTime(invoice.createdAt)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-zinc-400 block text-[11px]">Terakhir Diperbarui:</span>
+                  <span className="font-mono text-zinc-700 dark:text-zinc-300 font-medium">
+                    {formatDateTime(invoice.updatedAt || invoice.createdAt)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Kolom Kanan: Aksi Cepat Cetak, Kirim WA & Info Penerima (lg:col-span-5 xl:col-span-4) */}
@@ -211,6 +258,78 @@ export default async function InvoiceDetailPage({
                         Cetak Struk Kasir (80mm)
                       </p>
                       <p className="text-[11px] text-zinc-400">Untuk printer kasir bluetooth</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Cetak Surat Jalan */}
+                <Link
+                  href={`/invoices/${invoice.id}/surat-jalan`}
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors shadow-2xs group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
+                      <Truck className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-semibold text-amber-900 dark:text-amber-300">
+                        Cetak Surat Jalan
+                      </p>
+                      <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">Dokumen ekspedisi pengiriman barang</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Download Gambar Faktur (PNG / HD) */}
+                <Link
+                  href={`/invoices/${invoice.id}/print?download=png`}
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/60 dark:hover:bg-blue-900/30 transition-colors shadow-2xs group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Download className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-semibold text-blue-900 dark:text-blue-300">
+                        Unduh Gambar Faktur (PNG)
+                      </p>
+                      <p className="text-[11px] text-blue-600/80 dark:text-blue-400/80">Kualitas A4 HD tanpa screenshot</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Download Gambar Struk Kasir (PNG) */}
+                <Link
+                  href={`/invoices/${invoice.id}/thermal?download=png`}
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shadow-2xs group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-zinc-700 text-white dark:bg-zinc-300 dark:text-zinc-900 flex items-center justify-center shrink-0">
+                      <Download className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                        Unduh Gambar Struk (PNG)
+                      </p>
+                      <p className="text-[11px] text-zinc-400">Format gambar struk kasir 80mm</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Download Gambar Surat Jalan (PNG) */}
+                <Link
+                  href={`/invoices/${invoice.id}/surat-jalan?download=png`}
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors shadow-2xs group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
+                      <Download className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-semibold text-amber-900 dark:text-amber-300">
+                        Unduh Surat Jalan (PNG)
+                      </p>
+                      <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">Format gambar dokumen jalan A4</p>
                     </div>
                   </div>
                 </Link>

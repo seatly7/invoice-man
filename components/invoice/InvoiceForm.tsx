@@ -4,8 +4,8 @@ import * as React from 'react'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Product } from '@/types/product.types'
-import { CreateInvoicePayload, InvoiceStatus } from '@/types/invoice.types'
-import { createInvoiceAction } from '@/lib/actions/invoice.actions'
+import { CreateInvoicePayload, UpdateInvoicePayload, InvoiceStatus, InvoiceWithItems } from '@/types/invoice.types'
+import { createInvoiceAction, updateInvoiceAction } from '@/lib/actions/invoice.actions'
 import { calcInvoiceTotals } from '@/lib/utils/invoice-calc'
 import { formatRupiah } from '@/lib/utils/currency'
 import { toDateInputValue } from '@/lib/utils/date'
@@ -28,12 +28,14 @@ import {
   FileCheck2,
   Save,
   PackagePlus,
+  History,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export interface InvoiceFormProps {
   availableProducts: Product[]
   defaultTaxRate?: number
+  initialInvoice?: InvoiceWithItems
 }
 
 interface FormItem {
@@ -48,31 +50,47 @@ interface FormItem {
 export function InvoiceForm({
   availableProducts,
   defaultTaxRate = 11,
+  initialInvoice,
 }: InvoiceFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const isEditMode = !!initialInvoice
 
   // Form States
-  const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
-  const [customerAddress, setCustomerAddress] = useState('')
+  const [customerName, setCustomerName] = useState(initialInvoice?.customerName || '')
+  const [customerPhone, setCustomerPhone] = useState(initialInvoice?.customerPhone || '')
+  const [customerAddress, setCustomerAddress] = useState(initialInvoice?.customerAddress || '')
 
   // Tanggal
   const today = new Date()
   const defaultDue = new Date()
   defaultDue.setDate(today.getDate() + 7)
 
-  const [issueDate, setIssueDate] = useState(toDateInputValue(today))
-  const [dueDate, setDueDate] = useState(toDateInputValue(defaultDue))
+  const [issueDate, setIssueDate] = useState(
+    initialInvoice?.issueDate || toDateInputValue(today)
+  )
+  const [dueDate, setDueDate] = useState(
+    initialInvoice?.dueDate || toDateInputValue(defaultDue)
+  )
 
   // Items
-  const [items, setItems] = useState<FormItem[]>([])
+  const [items, setItems] = useState<FormItem[]>(
+    initialInvoice?.items?.map((it) => ({
+      id: it.id,
+      productId: it.productId,
+      itemName: it.itemName,
+      unit: it.unit,
+      qty: it.qty,
+      unitPrice: it.unitPrice,
+    })) || []
+  )
   const [isPickerOpen, setIsPickerOpen] = useState(false)
 
-  // Diskon & Pajak
-  const [discountAmount, setDiscountAmount] = useState<number>(0)
-  const [taxRate, setTaxRate] = useState<number>(defaultTaxRate)
-  const [notes, setNotes] = useState('')
+  // Diskon & Pajak & Catatan
+  const [discountAmount, setDiscountAmount] = useState<number>(initialInvoice?.discountAmount || 0)
+  const [taxRate, setTaxRate] = useState<number>(initialInvoice?.taxRate ?? defaultTaxRate)
+  const [notes, setNotes] = useState(initialInvoice?.notes || '')
+  const [revisionNote, setRevisionNote] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Real-time Live Totals Calculation (di-memoize agar tidak hitung ulang saat ketik nama pelanggan/notes)
@@ -114,15 +132,19 @@ export function InvoiceForm({
 
   function handleQtyChange(id: string, delta: number) {
     setItems((prev) =>
-      prev
-        .map((it) => {
-          if (it.id === id) {
-            const nextQty = it.qty + delta
-            return nextQty > 0 ? { ...it, qty: nextQty } : null
-          }
-          return it
-        })
-        .filter(Boolean) as FormItem[]
+      prev.map((it) => {
+        if (it.id === id) {
+          const nextQty = Math.max(1, it.qty + delta)
+          return { ...it, qty: nextQty }
+        }
+        return it
+      })
+    )
+  }
+
+  function handleQtyDirectChange(id: string, newQty: number) {
+    setItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, qty: Math.max(0, newQty) } : it))
     )
   }
 
@@ -172,18 +194,36 @@ export function InvoiceForm({
     }
 
     const toastId = toast.loading(
-      status === 'issued' ? 'Menerbitkan invoice baru...' : 'Menyimpan draft invoice...'
+      isEditMode
+        ? 'Menyimpan perubahan invoice...'
+        : status === 'issued'
+        ? 'Menerbitkan invoice baru...'
+        : 'Menyimpan draft invoice...'
     )
 
     startTransition(async () => {
       try {
-        const res = await createInvoiceAction(payload)
+        let res
+        if (isEditMode && initialInvoice) {
+          res = await updateInvoiceAction(initialInvoice.id, {
+            ...payload,
+            revisionNote: revisionNote.trim() || undefined,
+          })
+        } else {
+          res = await createInvoiceAction(payload)
+        }
+
         if (res.error) {
           setErrorMessage(res.error)
-          toast.error('Gagal membuat invoice', { id: toastId, description: res.error })
+          toast.error(isEditMode ? 'Gagal memperbarui invoice' : 'Gagal membuat invoice', {
+            id: toastId,
+            description: res.error,
+          })
         } else if (res.invoiceId) {
           toast.success(
-            status === 'issued'
+            isEditMode
+              ? 'Perubahan invoice berhasil disimpan!'
+              : status === 'issued'
               ? 'Invoice berhasil diterbitkan!'
               : 'Draft invoice berhasil disimpan!',
             { id: toastId }
@@ -378,6 +418,7 @@ export function InvoiceForm({
                         <Input
                           type="number"
                           min={0}
+                          disabled
                           value={it.unitPrice}
                           onChange={(e) => handlePriceChange(it.id, Number(e.target.value) || 0)}
                           className="h-9 pl-7 font-mono text-xs"
@@ -385,23 +426,34 @@ export function InvoiceForm({
                       </div>
                     </div>
 
-                    {/* Stepper Qty */}
-                    <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-0.5">
+                    {/* Stepper & Input Qty Manual */}
+                    <div className="flex items-center gap-0.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-0.5 shadow-2xs">
                       <button
                         type="button"
                         onClick={() => handleQtyChange(it.id, -1)}
-                        className="w-8 h-8 rounded flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95 transition-all text-zinc-700 dark:text-zinc-300"
+                        className="w-7 h-7 rounded flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95 transition-all text-zinc-700 dark:text-zinc-300 cursor-pointer"
                         aria-label="Kurangi jumlah"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="w-8 text-center font-mono font-bold text-sm">
-                        {it.qty}
-                      </span>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={it.qty === 0 ? '' : it.qty}
+                        onChange={(e) => handleQtyDirectChange(it.id, Number(e.target.value) || 0)}
+                        onBlur={(e) => {
+                          const val = Number(e.target.value)
+                          if (!val || val < 1) {
+                            handleQtyDirectChange(it.id, 1)
+                          }
+                        }}
+                        className="w-14 h-7 text-center font-mono font-bold text-xs sm:text-sm px-1 py-0 border-0 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-zinc-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        aria-label={`Jumlah kuantitas ${it.itemName}`}
+                      />
                       <button
                         type="button"
                         onClick={() => handleQtyChange(it.id, 1)}
-                        className="w-8 h-8 rounded flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95 transition-all text-zinc-700 dark:text-zinc-300"
+                        className="w-7 h-7 rounded flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95 transition-all text-zinc-700 dark:text-zinc-300 cursor-pointer"
                         aria-label="Tambah jumlah"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -518,6 +570,26 @@ export function InvoiceForm({
                 />
               </div>
 
+              {/* Input Catatan Audit Trail (Khusus Mode Edit) */}
+              {isEditMode && (
+                <div className="space-y-1.5 pt-1 p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
+                  <Label htmlFor="revisionNote" className="text-xs font-semibold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5" />
+                    <span>Alasan Perubahan / Catatan Revisi</span>
+                  </Label>
+                  <Input
+                    id="revisionNote"
+                    placeholder="Contoh: Mengubah qty item atas persetujuan klien..."
+                    value={revisionNote}
+                    onChange={(e) => setRevisionNote(e.target.value)}
+                    className="text-xs h-9 bg-white dark:bg-zinc-900 border-amber-200 dark:border-amber-800"
+                  />
+                  <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
+                    Akan dicatat dalam riwayat perubahan (audit trail) faktur ini.
+                  </p>
+                </div>
+              )}
+
               {/* Tombol Aksi di Desktop */}
               <div className="hidden lg:flex flex-col gap-2.5 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                 <Button
@@ -529,12 +601,12 @@ export function InvoiceForm({
                   {isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Menerbitkan...
+                      {isEditMode ? 'Menyimpan...' : 'Menerbitkan...'}
                     </>
                   ) : (
                     <>
                       <FileCheck2 className="w-5 h-5 mr-1.5" />
-                      Terbitkan Invoice
+                      {isEditMode ? 'Simpan Perubahan Invoice' : 'Terbitkan Invoice'}
                     </>
                   )}
                 </Button>
@@ -590,12 +662,12 @@ export function InvoiceForm({
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                Menerbitkan...
+                {isEditMode ? 'Menyimpan...' : 'Menerbitkan...'}
               </>
             ) : (
               <>
                 <FileCheck2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
-                Terbitkan Invoice
+                {isEditMode ? 'Simpan Perubahan' : 'Terbitkan Invoice'}
               </>
             )}
           </Button>

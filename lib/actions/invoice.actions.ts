@@ -3,10 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { createInvoiceSchema } from '@/lib/schemas/invoice.schema'
+import { createInvoiceSchema, updateInvoiceSchema } from '@/lib/schemas/invoice.schema'
 import { calcInvoiceTotals } from '@/lib/utils/invoice-calc'
 import { generateInvoiceNumber } from '@/lib/utils/invoice-number'
-import { CreateInvoicePayload, InvoiceStatus } from '@/types/invoice.types'
+import { CreateInvoicePayload, UpdateInvoicePayload, InvoiceStatus } from '@/types/invoice.types'
 
 export interface CreateInvoiceResult {
   success?: boolean
@@ -153,6 +153,136 @@ export async function createInvoiceAction(
 
   revalidatePath('/invoices')
   return { success: true, invoiceId: invoiceRecord.id }
+}
+
+/**
+ * Server Action: Edit / Perbarui Data Invoice yang Sudah Ada (Beserta Audit Trail)
+ */
+export async function updateInvoiceAction(
+  invoiceId: string,
+  payload: UpdateInvoicePayload
+): Promise<CreateInvoiceResult> {
+  const validated = updateInvoiceSchema.safeParse(payload)
+  if (!validated.success) {
+    return {
+      error: validated.error.issues[0]?.message || 'Data faktur tidak valid',
+    }
+  }
+
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Sesi login telah berakhir. Silakan masuk kembali.' }
+  }
+
+  // 1. Verifikasi kepemilikan invoice
+  const { data: existingInvoice, error: fetchError } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, status, notes, created_at')
+    .eq('id', invoiceId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !existingInvoice) {
+    return { error: 'Invoice tidak ditemukan atau Anda tidak memiliki akses.' }
+  }
+
+  const {
+    customerName,
+    customerPhone,
+    customerEmail,
+    customerAddress,
+    issueDate,
+    dueDate,
+    discountAmount,
+    taxRate,
+    notes,
+    status,
+    items,
+    revisionNote,
+  } = validated.data
+
+  // 2. Hitung ulang total finansial di server
+  const itemInputs = items.map((it) => ({
+    qty: it.qty,
+    unit_price: it.unitPrice,
+  }))
+  const totals = calcInvoiceTotals(itemInputs, discountAmount || 0, taxRate || 0)
+
+  // 3. Catat audit trail riwayat perubahan pada notes jika ada catatan revisi
+  let updatedNotes = notes?.trim() || null
+  const now = new Date()
+  const timestampStr = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
+  }).format(now)
+
+  const revisionLog = revisionNote?.trim()
+    ? `\n[Riwayat Revisi ${timestampStr}]: ${revisionNote.trim()}`
+    : `\n[Riwayat Revisi ${timestampStr}]: Data tagihan diperbarui.`
+
+  if (updatedNotes) {
+    updatedNotes = `${updatedNotes}${revisionLog}`
+  } else {
+    updatedNotes = revisionLog.trim()
+  }
+
+  // 4. Update Header Invoice
+  const { error: updateError } = await supabase
+    .from('invoices')
+    .update({
+      customer_name: customerName,
+      customer_phone: customerPhone || null,
+      customer_email: customerEmail || null,
+      customer_address: customerAddress || null,
+      issue_date: issueDate,
+      due_date: dueDate || null,
+      subtotal: totals.subtotal,
+      discount_amount: totals.discount_amount,
+      tax_rate: totals.tax_rate,
+      tax_amount: totals.tax_amount,
+      grand_total: totals.grand_total,
+      notes: updatedNotes,
+      status: status || existingInvoice.status,
+      updated_at: now.toISOString(),
+    })
+    .eq('id', invoiceId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    console.error('Update invoice error:', updateError)
+    return { error: updateError.message || 'Gagal memperbarui invoice.' }
+  }
+
+  // 5. Update Items: Hapus item lama lalu masukkan item baru yang sudah diperbarui
+  await supabase.from('invoice_items').delete().eq('invoice_id', invoiceId)
+
+  const itemRows = items.map((it, idx) => ({
+    invoice_id: invoiceId,
+    product_id: it.productId || null,
+    item_name: it.itemName,
+    unit: it.unit || 'pcs',
+    qty: it.qty,
+    unit_price: it.unitPrice,
+    sort_order: it.sortOrder ?? idx + 1,
+  }))
+
+  const { error: insertItemsError } = await supabase.from('invoice_items').insert(itemRows)
+  if (insertItemsError) {
+    console.error('Update invoice_items error:', insertItemsError)
+    return { error: 'Gagal memperbarui rincian barang invoice.' }
+  }
+
+  revalidatePath('/invoices')
+  revalidatePath(`/invoices/${invoiceId}`)
+  revalidatePath(`/invoices/${invoiceId}/print`)
+  revalidatePath(`/invoices/${invoiceId}/thermal`)
+  return { success: true, invoiceId }
 }
 
 /**

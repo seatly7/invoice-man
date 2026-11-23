@@ -98,6 +98,13 @@ export interface CreateInvoicePayload {
 }
 
 /**
+ * Payload form edit/perbarui invoice yang sudah ada (termasuk catatan audit trail)
+ */
+export interface UpdateInvoicePayload extends CreateInvoicePayload {
+  revisionNote?: string
+}
+
+/**
  * Filter & query params daftar invoice
  */
 export interface InvoiceQueryParams {

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { InvoiceStatus } from '@/types/invoice.types'
 import { updateInvoiceStatusAction, deleteInvoiceAction } from '@/lib/actions/invoice.actions'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Trash2, Loader2 } from 'lucide-react'
+import { CheckCircle2, Trash2, Loader2, Edit2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export interface InvoiceDetailActionsProps {
@@ -70,6 +71,18 @@ export function InvoiceDetailActions({
 
   return (
     <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+      <Link href={`/invoices/${invoiceId}/edit`} className="block w-full">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isPending}
+          className="w-full h-11 text-xs sm:text-sm font-semibold border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 shadow-2xs rounded-xl cursor-pointer transition-all active:scale-[0.99] disabled:opacity-70"
+        >
+          <Edit2 className="w-4 h-4 mr-2" />
+          <span>Ubah / Edit Invoice</span>
+        </Button>
+      </Link>
+
       {status !== 'paid' && (
         <Button
           type="button"

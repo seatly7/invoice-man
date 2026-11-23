@@ -7,6 +7,7 @@ import { getInvoiceSettings } from '@/lib/queries/settings.queries'
 import { formatRupiah } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { PrintButton } from '@/components/invoice/PrintButton'
+import { DownloadDocumentButton } from '@/components/invoice/DownloadDocumentButton'
 import { ArrowLeft, FileText } from 'lucide-react'
 
 export const instant = false
@@ -73,157 +74,164 @@ export default async function PrintInvoicePage({
           </Link>
 
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-xs text-zinc-400">
-              Pilih &quot;Save as PDF&quot; di dialog cetak
-            </span>
+            <DownloadDocumentButton
+              targetId="invoice-print-sheet"
+              filename={`Faktur-${invoice.invoiceNumber}`}
+            />
             <PrintButton label="Cetak Faktur A4" />
           </div>
         </div>
       </div>
 
-      {/* Lembar Dokumen Kertas A4 (Print Sheet) */}
-      <div className="max-w-4xl mx-auto mt-4 sm:mt-6 bg-white text-zinc-900 shadow-sm border border-zinc-200/80 p-6 sm:p-8 rounded-xl print:shadow-none print:border-none print:m-0 print:p-0 print:w-full print:max-w-none print:rounded-none break-inside-avoid print:break-inside-avoid">
-        {/* Header Usaha & Judul Faktur */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-4 border-b-2 border-zinc-900">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
-                <FileText className="w-3.5 h-3.5" />
+      {/* Container scroll horizontal untuk mobile agar lembar kertas A4 tetap utuh & tajam */}
+      <div className="w-full overflow-x-auto p-3 sm:p-6 flex justify-center print:p-0 print:m-0 print:overflow-visible">
+        {/* Lembar Dokumen Kertas A4 (Print Sheet) */}
+        <div
+          id="invoice-print-sheet"
+          className="w-[800px] min-w-[800px] bg-white text-zinc-900 shadow-sm border border-zinc-200/80 p-10 pb-12 rounded-none print:shadow-none print:border-none print:m-0 print:p-0 print:w-full print:min-w-0 print:max-w-none break-inside-avoid print:break-inside-avoid"
+        >
+          {/* Header Usaha & Judul Faktur */}
+          <div className="flex justify-between items-start gap-4 pb-4 border-b-2 border-zinc-900">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
+                  <FileText className="w-3.5 h-3.5" />
+                </div>
+                <h2 className="text-lg font-bold tracking-tight text-zinc-900">
+                  {settings?.businessName || 'INVOICE-MAN'}
+                </h2>
               </div>
-              <h2 className="text-lg font-bold tracking-tight text-zinc-900">
-                {settings?.businessName || 'INVOICE-MAN'}
-              </h2>
+              {settings?.businessAddress && (
+                <p className="text-xs text-zinc-600 max-w-sm whitespace-pre-line leading-relaxed">
+                  {settings.businessAddress}
+                </p>
+              )}
+              <div className="text-xs text-zinc-500 space-y-0.5 mt-1 font-mono">
+                {settings?.businessPhone && <p>Telp / WA: {settings.businessPhone}</p>}
+                {settings?.businessEmail && <p>Email: {settings.businessEmail}</p>}
+                {settings?.taxId && <p>NPWP: {settings.taxId}</p>}
+              </div>
             </div>
-            {settings?.businessAddress && (
-              <p className="text-xs text-zinc-600 max-w-sm whitespace-pre-line leading-relaxed">
-                {settings.businessAddress}
+
+            <div className="text-right">
+              <h1 className="text-3xl font-extrabold uppercase tracking-tight text-zinc-900">
+                FAKTUR TAGIHAN
+              </h1>
+              <p className="font-mono text-base font-bold text-zinc-800 mt-0.5">
+                #{invoice.invoiceNumber}
               </p>
-            )}
-            <div className="text-xs text-zinc-500 space-y-0.5 mt-1 font-mono">
-              {settings?.businessPhone && <p>Telp / WA: {settings.businessPhone}</p>}
-              {settings?.businessEmail && <p>Email: {settings.businessEmail}</p>}
-              {settings?.taxId && <p>NPWP: {settings.taxId}</p>}
+              <div className="text-xs text-zinc-600 mt-1.5 space-y-0.5">
+                <p>Tanggal Terbit: <span className="font-medium font-mono">{formatDate(invoice.issueDate)}</span></p>
+                {invoice.dueDate && (
+                  <p>Jatuh Tempo: <span className="font-medium font-mono">{formatDate(invoice.dueDate)}</span></p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="text-left sm:text-right">
-            <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-zinc-900">
-              FAKTUR TAGIHAN
-            </h1>
-            <p className="font-mono text-base font-bold text-zinc-800 mt-0.5">
-              #{invoice.invoiceNumber}
-            </p>
-            <div className="text-xs text-zinc-600 mt-1.5 space-y-0.5">
-              <p>Tanggal Terbit: <span className="font-medium font-mono">{formatDate(invoice.issueDate)}</span></p>
-              {invoice.dueDate && (
-                <p>Jatuh Tempo: <span className="font-medium font-mono">{formatDate(invoice.dueDate)}</span></p>
+          {/* Informasi Tagihan: Kepada Siapa */}
+          <div className="py-3.5 border-b border-zinc-200 grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Tagihan Ditujukan Kepada:
+              </span>
+              <h3 className="font-bold text-base text-zinc-900 mt-0.5">
+                {invoice.customerName}
+              </h3>
+              {invoice.customerAddress && (
+                <p className="text-xs text-zinc-600 mt-0.5 whitespace-pre-line leading-relaxed">
+                  {invoice.customerAddress}
+                </p>
+              )}
+              {invoice.customerPhone && (
+                <p className="text-xs text-zinc-500 font-mono mt-0.5">
+                  Telp: {invoice.customerPhone}
+                </p>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Informasi Tagihan: Kepada Siapa */}
-        <div className="py-3.5 border-b border-zinc-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              Tagihan Ditujukan Kepada:
-            </span>
-            <h3 className="font-bold text-base text-zinc-900 mt-0.5">
-              {invoice.customerName}
-            </h3>
-            {invoice.customerAddress && (
-              <p className="text-xs text-zinc-600 mt-0.5 whitespace-pre-line leading-relaxed">
-                {invoice.customerAddress}
-              </p>
-            )}
-            {invoice.customerPhone && (
-              <p className="text-xs text-zinc-500 font-mono mt-0.5">
-                Telp: {invoice.customerPhone}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Tabel Rincian Barang */}
-        <div className="py-4">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b-2 border-zinc-900 text-zinc-900 uppercase font-bold tracking-wider">
-                <th className="py-2 w-10 text-center">No</th>
-                <th className="py-2">Deskripsi Barang / Jasa</th>
-                <th className="py-2 w-20 text-center">Satuan</th>
-                <th className="py-2 w-16 text-center">Qty</th>
-                <th className="py-2 w-28 text-right font-mono">Harga (Rp)</th>
-                <th className="py-2 w-32 text-right font-mono">Total (Rp)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200">
-              {invoice.items.map((it, idx) => (
-                <tr key={it.id} className="text-zinc-800">
-                  <td className="py-2 text-center text-zinc-400 font-mono">{idx + 1}</td>
-                  <td className="py-2 font-medium pr-2">{it.itemName}</td>
-                  <td className="py-2 text-center text-zinc-600">{it.unit}</td>
-                  <td className="py-2 text-center font-mono font-bold">{it.qty}</td>
-                  <td className="py-2 text-right font-mono">{formatRupiah(it.unitPrice, false)}</td>
-                  <td className="py-2 text-right font-mono font-semibold">{formatRupiah(it.lineTotal, false)}</td>
+          {/* Tabel Rincian Barang */}
+          <div className="py-4">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b-2 border-zinc-900 text-zinc-900 uppercase font-bold tracking-wider">
+                  <th className="py-2.5 w-12 text-center">No</th>
+                  <th className="py-2.5">Deskripsi Barang / Jasa</th>
+                  <th className="py-2.5 w-20 text-center">Satuan</th>
+                  <th className="py-2.5 w-16 text-center">Qty</th>
+                  <th className="py-2.5 w-32 text-right font-mono">Harga (Rp)</th>
+                  <th className="py-2.5 w-36 text-right font-mono">Total (Rp)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Kalkulasi Total & Catatan */}
-        <div className="pt-3 border-t-2 border-zinc-900 flex flex-col sm:flex-row justify-between gap-6">
-          <div className="flex-1 space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              Catatan & Instruksi Pembayaran:
-            </span>
-            <p className="text-xs text-zinc-600 whitespace-pre-line leading-relaxed max-w-md">
-              {invoice.notes || settings?.footerNote || 'Pembayaran dapat ditransfer sesuai kesepakatan. Terima kasih.'}
-            </p>
+              </thead>
+              <tbody className="divide-y divide-zinc-200">
+                {invoice.items.map((it, idx) => (
+                  <tr key={it.id} className="text-zinc-800">
+                    <td className="py-2.5 text-center text-zinc-400 font-mono">{idx + 1}</td>
+                    <td className="py-2.5 font-medium pr-2">{it.itemName}</td>
+                    <td className="py-2.5 text-center text-zinc-600">{it.unit}</td>
+                    <td className="py-2.5 text-center font-mono font-bold">{it.qty}</td>
+                    <td className="py-2.5 text-right font-mono">{formatRupiah(it.unitPrice, false)}</td>
+                    <td className="py-2.5 text-right font-mono font-semibold">{formatRupiah(it.lineTotal, false)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <div className="w-full sm:w-72 space-y-1.5 text-xs">
-            <div className="flex justify-between text-zinc-600">
-              <span>Subtotal</span>
-              <span className="font-mono">{formatRupiah(invoice.subtotal)}</span>
+          {/* Kalkulasi Total & Catatan */}
+          <div className="pt-3 border-t-2 border-zinc-900 flex justify-between gap-6">
+            <div className="flex-1 space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Catatan & Instruksi Pembayaran:
+              </span>
+              <p className="text-xs text-zinc-600 whitespace-pre-line leading-relaxed max-w-md">
+                {invoice.notes || settings?.footerNote || 'Pembayaran dapat ditransfer sesuai kesepakatan. Terima kasih.'}
+              </p>
             </div>
 
-            {invoice.discountAmount > 0 && (
+            <div className="w-72 space-y-1.5 text-xs">
               <div className="flex justify-between text-zinc-600">
-                <span>Diskon</span>
-                <span className="font-mono">-{formatRupiah(invoice.discountAmount)}</span>
+                <span>Subtotal</span>
+                <span className="font-mono">{formatRupiah(invoice.subtotal)}</span>
               </div>
-            )}
 
-            {invoice.taxRate > 0 && (
-              <div className="flex justify-between text-zinc-600">
-                <span>PPN ({invoice.taxRate}%)</span>
-                <span className="font-mono">+{formatRupiah(invoice.taxAmount)}</span>
+              {invoice.discountAmount > 0 && (
+                <div className="flex justify-between text-zinc-600">
+                  <span>Diskon</span>
+                  <span className="font-mono">-{formatRupiah(invoice.discountAmount)}</span>
+                </div>
+              )}
+
+              {invoice.taxRate > 0 && (
+                <div className="flex justify-between text-zinc-600">
+                  <span>PPN ({invoice.taxRate}%)</span>
+                  <span className="font-mono">+{formatRupiah(invoice.taxAmount)}</span>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-zinc-900 flex justify-between font-bold text-sm text-zinc-900">
+                <span>Grand Total</span>
+                <span className="font-mono text-base">{formatRupiah(invoice.grandTotal)}</span>
               </div>
-            )}
-
-            <div className="pt-1.5 border-t border-zinc-900 flex justify-between font-bold text-sm text-zinc-900">
-              <span>Grand Total</span>
-              <span className="font-mono text-base">{formatRupiah(invoice.grandTotal)}</span>
             </div>
           </div>
-        </div>
 
-        {/* Kolom Tanda Tangan */}
-        <div className="pt-8 flex justify-between text-center text-xs text-zinc-800 break-inside-avoid print:break-inside-avoid">
-          <div className="w-44">
-            <p>Penerima,</p>
-            <div className="h-12"></div>
-            <p className="border-t border-zinc-400 pt-1 font-medium">{invoice.customerName}</p>
-          </div>
+          {/* Kolom Tanda Tangan */}
+          <div className="pt-12 pb-4 flex justify-between text-center text-xs text-zinc-800 break-inside-avoid print:break-inside-avoid">
+            <div className="w-48">
+              <p>Penerima,</p>
+              <div className="h-16"></div>
+              <p className="border-t border-zinc-400 pt-1 font-medium">{invoice.customerName}</p>
+            </div>
 
-          <div className="w-44">
-            <p>Hormat Kami,</p>
-            <div className="h-12"></div>
-            <p className="border-t border-zinc-400 pt-1 font-bold text-zinc-900">
-              {settings?.businessName || 'Pihak Pengirim'}
-            </p>
+            <div className="w-48">
+              <p>Hormat Kami,</p>
+              <div className="h-16"></div>
+              <p className="border-t border-zinc-400 pt-1 font-bold text-zinc-900">
+                {settings?.businessName || 'Pihak Pengirim'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
