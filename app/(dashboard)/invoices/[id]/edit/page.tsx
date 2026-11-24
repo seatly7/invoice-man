@@ -67,6 +67,7 @@ export default async function EditInvoicePage({
 
       {/* Formulir Interaktif dengan Data Awal Terisi */}
       <InvoiceForm
+        key={`edit-${invoice.id}`}
         availableProducts={productsRes.data}
         defaultTaxRate={defaultTaxRate}
         initialInvoice={invoice}

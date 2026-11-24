@@ -1,8 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition, useEffect, useCallback } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { Product } from '@/types/product.types'
 import { CreateInvoicePayload, UpdateInvoicePayload, InvoiceStatus, InvoiceWithItems } from '@/types/invoice.types'
 import { createInvoiceAction, updateInvoiceAction } from '@/lib/actions/invoice.actions'
@@ -43,7 +43,7 @@ interface FormItem {
   productId?: string | null
   itemName: string
   unit: string
-  qty: number
+  qty: number | string
   unitPrice: number
 }
 
@@ -53,6 +53,7 @@ export function InvoiceForm({
   initialInvoice,
 }: InvoiceFormProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const isEditMode = !!initialInvoice
 
@@ -96,7 +97,7 @@ export function InvoiceForm({
   // Real-time Live Totals Calculation (di-memoize agar tidak hitung ulang saat ketik nama pelanggan/notes)
   const totals = React.useMemo(() => {
     return calcInvoiceTotals(
-      items.map((it) => ({ qty: it.qty, unit_price: it.unitPrice })),
+      items.map((it) => ({ qty: Number(it.qty) || 0, unit_price: it.unitPrice })),
       discountAmount,
       taxRate
     )
@@ -110,10 +111,10 @@ export function InvoiceForm({
       if (existingIdx !== -1) {
         setItems((prev) =>
           prev.map((it, idx) =>
-            idx === existingIdx ? { ...it, qty: it.qty + 1 } : it
+            idx === existingIdx ? { ...it, qty: Number(it.qty) + 1 } : it
           )
         )
-        toast.info(`Jumlah "${p.itemName}" ditambah menjadi ${items[existingIdx].qty + 1}`)
+        toast.info(`Jumlah "${p.itemName}" ditambah menjadi ${Number(items[existingIdx].qty) + 1}`)
         return
       }
     }
@@ -134,7 +135,9 @@ export function InvoiceForm({
     setItems((prev) =>
       prev.map((it) => {
         if (it.id === id) {
-          const nextQty = Math.max(1, it.qty + delta)
+          const current = Number(it.qty) || 0
+          // shortcut: stepper loncat 1 (minimal 0.5), upgrade jika butuh step custom per unit
+          const nextQty = Math.max(0.5, Math.round((current + delta) * 100) / 100)
           return { ...it, qty: nextQty }
         }
         return it
@@ -142,9 +145,9 @@ export function InvoiceForm({
     )
   }
 
-  function handleQtyDirectChange(id: string, newQty: number) {
+  function handleQtyDirectChange(id: string, newQty: number | string) {
     setItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, qty: Math.max(0, newQty) } : it))
+      prev.map((it) => (it.id === id ? { ...it, qty: newQty } : it))
     )
   }
 
@@ -157,6 +160,33 @@ export function InvoiceForm({
   function handleRemoveItem(id: string) {
     setItems((prev) => prev.filter((it) => it.id !== id))
   }
+
+  const resetForm = useCallback(() => {
+    setCustomerName('')
+    setCustomerPhone('')
+    setCustomerAddress('')
+    const t = new Date()
+    const d = new Date()
+    d.setDate(t.getDate() + 7)
+    setIssueDate(toDateInputValue(t))
+    setDueDate(toDateInputValue(d))
+    setItems([])
+    setDiscountAmount(0)
+    setTaxRate(defaultTaxRate)
+    setNotes('')
+    setRevisionNote('')
+    setErrorMessage(null)
+  }, [defaultTaxRate])
+
+  // shortcut: hapus unsaved changes saat berpindah halaman dari /invoices/new
+  useEffect(() => {
+    if (!isEditMode) {
+      resetForm()
+      return () => {
+        resetForm()
+      }
+    }
+  }, [isEditMode, pathname, resetForm])
 
   // Submit Handler
   function handleSubmit(status: InvoiceStatus) {
@@ -187,7 +217,7 @@ export function InvoiceForm({
         productId: it.productId,
         itemName: it.itemName,
         unit: it.unit,
-        qty: it.qty,
+        qty: Number(it.qty) || 1,
         unitPrice: it.unitPrice,
         sortOrder: idx + 1,
       })),
@@ -228,7 +258,11 @@ export function InvoiceForm({
               : 'Draft invoice berhasil disimpan!',
             { id: toastId }
           )
+          if (!isEditMode) {
+            resetForm()
+          }
           router.push(`/invoices/${res.invoiceId}`)
+          router.refresh()
         }
       } catch {
         toast.error('Terjadi kesalahan saat memproses invoice', { id: toastId })
@@ -437,17 +471,24 @@ export function InvoiceForm({
                         <Minus className="w-3.5 h-3.5" />
                       </button>
                       <Input
-                        type="number"
-                        min={1}
-                        value={it.qty === 0 ? '' : it.qty}
-                        onChange={(e) => handleQtyDirectChange(it.id, Number(e.target.value) || 0)}
-                        onBlur={(e) => {
-                          const val = Number(e.target.value)
-                          if (!val || val < 1) {
-                            handleQtyDirectChange(it.id, 1)
+                        type="text"
+                        inputMode="decimal"
+                        value={it.qty}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(',', '.')
+                          if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                            handleQtyDirectChange(it.id, val)
                           }
                         }}
-                        className="w-14 h-7 text-center font-mono font-bold text-xs sm:text-sm px-1 py-0 border-0 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-zinc-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        onBlur={(e) => {
+                          const val = parseFloat(String(e.target.value))
+                          if (!val || val <= 0) {
+                            handleQtyDirectChange(it.id, 1)
+                          } else {
+                            handleQtyDirectChange(it.id, val)
+                          }
+                        }}
+                        className="w-14 h-7 text-center font-mono font-bold text-xs sm:text-sm px-1 py-0 border-0 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-zinc-400"
                         aria-label={`Jumlah kuantitas ${it.itemName}`}
                       />
                       <button
@@ -462,8 +503,27 @@ export function InvoiceForm({
 
                     {/* Subtotal Item */}
                     <div className="text-right font-mono font-bold text-sm text-zinc-900 dark:text-zinc-100 shrink-0">
-                      {formatRupiah(it.qty * it.unitPrice)}
+                      {formatRupiah((Number(it.qty) || 0) * it.unitPrice)}
                     </div>
+                  </div>
+
+                  {/* Quick Action Qty Presets */}
+                  <div className="flex items-center justify-end gap-1.5 pt-0.5">
+                    <span className="text-[11px] text-zinc-400">Qty:</span>
+                    {[10, 50, 100, 200].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleQtyDirectChange(it.id, preset)}
+                        className={`text-xs px-2 py-0.5 font-mono rounded border transition-colors ${
+                          Number(it.qty) === preset
+                            ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900'
+                            : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200/70 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ))}

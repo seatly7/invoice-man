@@ -45,6 +45,7 @@ export default async function NewInvoicePage() {
 
       {/* Formulir Interaktif dengan Kalkulasi Live */}
       <InvoiceForm
+        key="new-invoice"
         availableProducts={productsRes.data}
         defaultTaxRate={defaultTaxRate}
       />

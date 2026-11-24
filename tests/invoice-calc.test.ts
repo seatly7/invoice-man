@@ -4,6 +4,19 @@ import { calcInvoiceTotals } from '../lib/utils/invoice-calc.ts'
 import { generateInvoiceNumber } from '../lib/utils/invoice-number.ts'
 
 describe('calcInvoiceTotals', () => {
+  it('correctly calculates subtotal with decimal qty (e.g. 0.5)', () => {
+    const items = [
+      { qty: 0.5, unit_price: 50000 },
+      { qty: 1.5, unit_price: 20000 },
+    ]
+    const result = calcInvoiceTotals(items, 5000, 11)
+
+    assert.strictEqual(result.subtotal, 55000)
+    assert.strictEqual(result.discount_amount, 5000)
+    assert.strictEqual(result.tax_amount, 5500)
+    assert.strictEqual(result.grand_total, 55500)
+  })
+
   it('correctly calculates subtotal, 11% tax, and grand total', () => {
     const items = [
       { qty: 2, unit_price: 50000 },
