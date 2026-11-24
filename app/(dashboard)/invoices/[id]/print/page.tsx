@@ -9,6 +9,7 @@ import { formatDate } from '@/lib/utils/date'
 import { PrintButton } from '@/components/invoice/PrintButton'
 import { DownloadDocumentButton } from '@/components/invoice/DownloadDocumentButton'
 import { ArrowLeft, FileText } from 'lucide-react'
+import Image from 'next/image'
 
 export const instant = false
 
@@ -88,14 +89,22 @@ export default async function PrintInvoicePage({
         {/* Lembar Dokumen Kertas A4 (Print Sheet) */}
         <div
           id="invoice-print-sheet"
-          className="w-[800px] min-w-[800px] bg-white text-zinc-900 shadow-sm border border-zinc-200/80 p-10 pb-12 rounded-none print:shadow-none print:border-none print:m-0 print:p-0 print:w-full print:min-w-0 print:max-w-none break-inside-avoid print:break-inside-avoid"
+          className="w-200 min-w-200 bg-white text-zinc-900 shadow-sm border border-zinc-200/80 p-10 pb-12 rounded-none print:shadow-none print:border-none print:m-0 print:p-0 print:w-full print:min-w-0 print:max-w-none break-inside-avoid print:break-inside-avoid"
         >
           {/* Header Usaha & Judul Faktur */}
           <div className="flex justify-between items-start gap-4 pb-4 border-b-2 border-zinc-900">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
-                  <FileText className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 text-white flex items-center justify-center font-bold text-xs">
+                  {/* <FileText className="w-3.5 h-3.5" /> */}
+                  <Image 
+                    alt='Logo'
+                    height={50}
+                    width={50}
+                    className="object-contain"
+                    priority
+                    src={"/logo/Invoice_Man_Mascot_Logo.png"} 
+                  />
                 </div>
                 <h2 className="text-lg font-bold tracking-tight text-zinc-900">
                   {settings?.businessName || 'INVOICE-MAN'}

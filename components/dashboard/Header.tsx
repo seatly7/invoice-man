@@ -11,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { FileText, LogOut, User, Loader2 } from 'lucide-react'
+import { LogOut, User, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 export interface HeaderProps {
   businessName?: string
@@ -43,9 +44,16 @@ export function Header({ businessName, userEmail }: HeaderProps) {
             className="flex items-center gap-2 font-bold tracking-tight text-base text-zinc-900 dark:text-zinc-100 active:scale-95 transition-transform"
           >
             <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-xs">
-              <FileText className="w-3.5 h-3.5" />
+              <Image 
+                alt='Logo'
+                height={50}
+                width={50}
+                className="object-contain"
+                priority
+                src={"/logo/Invoice_Man_Mascot_Logo.png"} 
+              />
             </div>
-            <span>Invoice-Man</span>
+            <span>InvoiceMan</span>
           </Link>
 
           {businessName && (

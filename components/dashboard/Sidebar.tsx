@@ -7,6 +7,7 @@ import { FileText, Package, Settings, Store, LogOut, Loader2 } from 'lucide-reac
 import { signOutAction } from '@/lib/actions/auth.actions'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 const NAV_ITEMS = [
   {
@@ -55,7 +56,14 @@ export function Sidebar({ businessName, userEmail }: SidebarProps) {
           className="flex items-center gap-2.5 font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100"
         >
           <div className="w-8 h-8 rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-xs">
-            <FileText className="w-4 h-4" />
+            <Image
+              alt='Logo'
+              height={50}
+              width={50}
+              className="object-contain"
+              priority
+              src={"/logo/Invoice_Man_Mascot_Logo.png"}
+            />
           </div>
           <span className="font-semibold tracking-tight">Invoice-Man</span>
         </Link>
