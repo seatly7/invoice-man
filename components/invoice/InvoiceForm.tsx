@@ -446,13 +446,12 @@ export function InvoiceForm({
                   {/* Baris Harga & Stepper Qty Ramah Jempol */}
                   <div className="flex items-center justify-between gap-3 pt-1 border-t border-zinc-200/60 dark:border-zinc-800">
                     {/* Input Harga Satuan */}
-                    <div className="flex-1 max-w-[140px]">
+                    <div className="flex-1 max-w-35">
                       <div className="relative">
                         <span className="absolute left-2.5 top-2.5 text-xs text-zinc-400">Rp</span>
                         <Input
                           type="number"
                           min={0}
-                          disabled
                           value={it.unitPrice}
                           onChange={(e) => handlePriceChange(it.id, Number(e.target.value) || 0)}
                           className="h-9 pl-7 font-mono text-xs"
