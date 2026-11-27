@@ -42,7 +42,7 @@ export function Sidebar({ businessName, userEmail }: SidebarProps) {
       try {
         await signOutAction()
       } catch {
-        toast.error('Gagal keluar', { id: toastId })
+        // toast.error('Gagal keluar', { id: toastId })
       }
     })
   }
@@ -50,21 +50,20 @@ export function Sidebar({ businessName, userEmail }: SidebarProps) {
   return (
     <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 z-30 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 print:hidden">
       {/* Brand & Logo Header */}
-      <div className="h-16 flex items-center px-5 border-b border-zinc-100 dark:border-zinc-800 gap-3">
+      <div className="h-16 mt-3 flex items-center px-5 border-b border-zinc-100 gap-3">
         <Link
           href="/invoices"
           className="flex items-center gap-2.5 font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100"
         >
-          <div className="w-8 h-8 rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-xs">
-            <Image
-              alt='Logo'
-              height={50}
-              width={50}
-              className="object-contain"
-              priority
-              src={"/logo/Invoice_Man_Mascot_Logo.png"}
-            />
-          </div>
+          <Image
+            alt='Logo'
+            height={50}
+            width={50}
+            className="object-contain rounded-md bg-amber-200"
+            priority
+            src={"/logo/Invoice_Man_Mascot_Logo.png"}
+          />
+
           <span className="font-semibold tracking-tight">Invoice-Man</span>
         </Link>
       </div>
@@ -121,7 +120,7 @@ export function Sidebar({ businessName, userEmail }: SidebarProps) {
               <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                 {businessName || 'Usaha Saya'}
               </p>
-              <p className="text-[11px] text-zinc-400 truncate max-w-[110px]">
+              <p className="text-[11px] text-zinc-400 truncate max-w-27.5">
                 {userEmail || 'Akun'}
               </p>
             </div>

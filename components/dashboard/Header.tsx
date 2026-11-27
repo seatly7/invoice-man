@@ -29,7 +29,7 @@ export function Header({ businessName, userEmail }: HeaderProps) {
       try {
         await signOutAction()
       } catch {
-        toast.error('Gagal keluar', { id: toastId })
+        // toast.error('Gagal keluar', { id: toastId })
       }
     })
   }
@@ -44,20 +44,20 @@ export function Header({ businessName, userEmail }: HeaderProps) {
             className="flex items-center gap-2 font-bold tracking-tight text-base text-zinc-900 dark:text-zinc-100 active:scale-95 transition-transform"
           >
             <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-xs">
-              <Image 
+              <Image
                 alt='Logo'
                 height={50}
                 width={50}
-                className="object-contain"
+                className="object-contain rounded-md bg-amber-200"
                 priority
-                src={"/logo/Invoice_Man_Mascot_Logo.png"} 
+                src={"/logo/Invoice_Man_Mascot_Logo.png"}
               />
             </div>
             <span>InvoiceMan</span>
           </Link>
 
           {businessName && (
-            <div className="flex items-center gap-1 pl-2 border-l border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 font-medium max-w-[130px] truncate">
+            <div className="flex items-center gap-1 pl-2 border-l border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 font-medium max-w-32.5 truncate">
               <span className="truncate">{businessName}</span>
             </div>
           )}
